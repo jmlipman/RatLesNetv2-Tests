@@ -1,0 +1,20 @@
+Loading application python-3.5.3 environment with needed modules
+OMP_NUM_THREADS set to 1
+If you are using OpenMP threaded libraries you need to set this variable to the number of cores you are requesting per process
+/appl/opt/python/3.5.3-gnu540/lib/python3.5/site-packages/h5py-2.7.0-py3.5-linux-x86_64.egg/h5py/__init__.py:34: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+WARNING - root - Added new config entry: "base_path"
+WARNING - root - Added new config entry: "config.concat"
+INFO - MiNet - Running command 'main'
+INFO - MiNet - Started run with ID "1"
+2019-06-17 10:39:48.630878: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-06-17 10:39:48.939015: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1411] Found device 0 with properties: 
+name: Tesla P100-PCIE-16GB major: 6 minor: 0 memoryClockRate(GHz): 1.3285
+pciBusID: 0000:83:00.0
+totalMemory: 15.90GiB freeMemory: 15.61GiB
+2019-06-17 10:39:48.939557: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1490] Adding visible gpu devices: 0
+2019-06-17 10:39:50.032977: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971] Device interconnect StreamExecutor with strength 1 edge matrix:
+2019-06-17 10:39:50.033051: I tensorflow/core/common_runtime/gpu/gpu_device.cc:977]      0 
+2019-06-17 10:39:50.033323: I tensorflow/core/common_runtime/gpu/gpu_device.cc:990] 0:   N 
+2019-06-17 10:39:50.035036: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1103] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 16280 MB memory) -> physical GPU (device: 0, name: Tesla P100-PCIE-16GB, pci bus id: 0000:83:00.0, compute capability: 6.0)
+2019-06-17 10:39:50.042418: E tensorflow/stream_executor/cuda/cuda_driver.cc:806] failed to allocate 15.90G (17071734784 bytes) from device: CUDA_ERROR_OUT_OF_MEMORY: out of memory
