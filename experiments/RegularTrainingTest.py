@@ -3,7 +3,7 @@ from experiments.lib.models.MiNetBratsModel import MiNetBrats
 from sacred import Experiment
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
 ex = Experiment("RegularTrainingTest")
 
