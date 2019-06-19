@@ -19,7 +19,7 @@ messageTwitter = "minet_d2_concat2"
 
 # Fixed configuration
 config = {}
-config["config.lr"] = 1e-5
+config["config.lr"] = 1e-8
 #config["config.weight_decay"] = 1e-4
 config["config.opt"] = tf.train.AdamOptimizer(learning_rate=config["config.lr"])
 #config["config.opt"] = tf.contrib.opt.AdamWOptimizer(weight_decay=config["weight_decay"], learning_rate=config["lr"])
@@ -34,19 +34,18 @@ config["config.alpha_l2"] = 0.01 # Typical value
 config["config.early_stopping_c"] = 99
 config["Model"] = MiNetBrats
 
-for gr in [1]:
+for _ in [1]:
 
     # Name of the experiment and path
-    exp_name = "growthrate_" + str(gr)
+    exp_name = "growthrate_16"
     experiment_path = BASE_PATH + exp_name + "/"
     ex.observers = [FileStorageObserver.create(experiment_path)]
     config["base_path"] = experiment_path
     
     # Testing paramenters
-    config["config.growth_rate"] = 1
-    config["config.concat"] = 0 # This must be one...
-    config["config.growth_rate"] = gr
+    config["config.growth_rate"] = 16
+    config["config.concat"] = 2 # This must be one...
 
     ex.run(config_updates=config)
 
-    Twitter().tweet(messageTwitter + exp_name)
+    #Twitter().tweet(messageTwitter + exp_name)

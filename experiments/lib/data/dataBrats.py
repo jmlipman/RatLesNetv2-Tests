@@ -28,8 +28,8 @@ class Data:
             instead of the Age and Survival days in those cases it is not GTR.
         """
         # Get the lists
-        #self.PATH = "/wrk/valverde/BraTS/"
-        self.PATH = "/home/miguelv/Downloads/MICCAI_BraTS_2019_Data_Training/"
+        self.PATH = "/wrk/valverde/BraTS/"
+        #self.PATH = "/home/miguelv/Downloads/MICCAI_BraTS_2019_Data_Training/"
         pathHGG = self.PATH + "HGG/"
         pathLGG = self.PATH + "LGG/"
         pathSurvival = self.PATH + "survival_data.csv"
@@ -65,8 +65,6 @@ class Data:
         self.test_files = filesHGG[train_idx_HGG:test_idx_HGG] + filesLGG[train_idx_LGG:test_idx_LGG]
         self.validation_files = filesHGG[test_idx_HGG:] + filesLGG[test_idx_LGG:]
 
-        print(len(self.test_files))
-
         # Randomize the order of the files we have picked
         if randomize:
             random.shuffle(self.train_files)
@@ -90,6 +88,8 @@ class Data:
 
            Return stuff and id
         """
+        def standardize(data):
+            return (data-data.mean())/data.std()
         if len(self.pool) > 0:
             return self.pool.pop()
 
@@ -104,7 +104,7 @@ class Data:
 
         # Read the actual data
         mods = ["flair", "t1", "t1ce", "t2"]
-        X_train = np.stack([nib.load(self.PATH+gtype+"/"+target+"/"+target+"_"+mod+".nii.gz").get_data() for mod in mods], axis=-1)
+        X_train = np.stack([standardize(nib.load(self.PATH+gtype+"/"+target+"/"+target+"_"+mod+".nii.gz").get_data()) for mod in mods], axis=-1)
 
         if self.depth_first:
             X_train = np.moveaxis(X_train, 2, 0)

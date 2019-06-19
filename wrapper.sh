@@ -7,7 +7,7 @@
 #SBATCH -N 1
 #SBATCH -p gpu
 #SBATCH --gres=gpu:p100:1
-#SBATCH --mem=16000
+#SBATCH --mem=5000
 #SBATCH
 
 srun python minetBrats.py 

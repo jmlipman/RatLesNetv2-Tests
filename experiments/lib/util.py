@@ -53,7 +53,8 @@ def crossValidation(rows, folds, randomize=True):
 def log(text):
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     # I dont need to save anything because it's being saved by sacred in cout.txt
-    print(now + ": " + text)
+    # Flush is set to True for SLURM (CSC)
+    print(now + ": " + text, flush=True)
 
 def binary_contour(volumes):
     W = np.ones((3,3,3,volumes.shape[-1],1))

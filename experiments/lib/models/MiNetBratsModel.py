@@ -47,7 +47,7 @@ class MiNetBrats(ModelBase):
         self.placeholders["out_segmentation"] = tf.placeholder(tf.float32, [1, 138, 173, 172, 4])
         #self.x_age = tf.placeholder(tf.float32, [1])
         #self.y_true = tf.placeholder(tf.float32, [1, 138, 173, 172, 4])
-        self.outputs = [] # I will store all the outputs that need to be opt.
+        #self.outputs = [] # I will store all the outputs that need to be opt.
         c1 = self.config["concat"]
         f1 = self.config["growth_rate"] # Initial filters
         g1 = self.config["growth_rate"] # Growth rate

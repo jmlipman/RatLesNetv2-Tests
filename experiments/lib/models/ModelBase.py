@@ -79,7 +79,6 @@ class ModelBase:
                 run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
                 _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
                 d_tmp = data.getNextTrainingBatch()
-                keep_training = False
 
             # Save weights every 2 epochs
             if e % 2 == 0:
@@ -217,7 +216,7 @@ class ModelBase:
             e += 1
 
 
-    def predict(self, data, save):
+    def predict(self, data, save=False):
         """Prediction routine. Data does not need to provide the expected
            predictions since it will not calculate the dice coefficient.
 
@@ -267,7 +266,7 @@ class ModelBase:
         
 
 
-    def test(self, data, save):
+    def test(self, data, save=False):
         """This function will generate predictions and measure the results.
 
            Args:

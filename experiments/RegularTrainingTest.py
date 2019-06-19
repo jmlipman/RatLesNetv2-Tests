@@ -42,4 +42,4 @@ def main(config, Model, base_path, _run):
 
     model = Model(config)
     model.train(data)
-    model.predict(data, save=True)
+    model.test(data)
