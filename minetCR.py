@@ -2,7 +2,7 @@ from sacred.observers import FileStorageObserver
 from experiments.RegularTrainingTest import ex
 from experiments.lib.util import Twitter
 from experiments.lib.models.MiNetBratsModel import MiNetBrats
-from experiments.lib.data.dataBrats import Data
+from experiments.lib.data.dataCR import Data
 import tensorflow as tf
 import itertools
 

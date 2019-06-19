@@ -4,13 +4,15 @@ import pandas as pd
 import os
 import random
 from scipy import ndimage
+from experiments.lib.data.BaseData import BaseData
 
 def hotvector(arr, classes):
     if not type(arr) is np.ndarray:
         raise Exception("array must be numpy array!")
     return np.stack([(arr==i)*1.0 for i in range(classes)], axis=-1)
 
-class Data:
+#########data.split(folds=1, prop=[0.7, 0.2, 0.1])
+class Data(BaseData):
     def __init__(self, randomize=False, depth_first=True, only_GTR=False, sliced=False, bounding_box=True):
         """In the initializer we gather the location of the files that will
            be used for training, testing and validation.
@@ -28,12 +30,24 @@ class Data:
             instead of the Age and Survival days in those cases it is not GTR.
         """
         # Get the lists
-        self.PATH = "/wrk/valverde/BraTS/"
-        #self.PATH = "/home/miguelv/Downloads/MICCAI_BraTS_2019_Data_Training/"
+        pc_name = os.uname()[1]
+        if pc_name == "taito-gpu.csc.fi":
+            # CSC TAITO-GPU
+            self.PATH = "/wrk/valverde/BraTS/"
+        elif pc_name == "FUJ":
+            # LOCAL
+            self.PATH = "/home/miguelv/Downloads/MICCAI_BraTS_2019_Data_Training/"
+        elif pc_name == "nmrcs3":
+            # NMR-CS3
+            self.PATH = "/home/miguelv/data/in/Brats/"
+        else:
+            raise Exception("Unknown PC")
+
         pathHGG = self.PATH + "HGG/"
         pathLGG = self.PATH + "LGG/"
         pathSurvival = self.PATH + "survival_data.csv"
 
+        self.randomize = randomize
         self.depth_first = depth_first
         self.only_GTR = only_GTR
         self.sliced = sliced
@@ -49,7 +63,10 @@ class Data:
         filesLGG = ["LGG/" + f for f in os.listdir(pathLGG)]
         totalLGG = len(filesLGG)
 
+        self.groups = [filesHGG, filesLGG]
+
         # Randomize the files we firstly pick
+        """
         if randomize:
             random.shuffle(filesHGG)
             random.shuffle(filesLGG)
@@ -61,22 +78,23 @@ class Data:
         test_idx_LGG = int(totalLGG*0.2) + train_idx_LGG
 
 
-        self.train_files = filesHGG[:train_idx_HGG] + filesLGG[:train_idx_LGG]
+        self.training_files = filesHGG[:train_idx_HGG] + filesLGG[:train_idx_LGG]
         self.test_files = filesHGG[train_idx_HGG:test_idx_HGG] + filesLGG[train_idx_LGG:test_idx_LGG]
         self.validation_files = filesHGG[test_idx_HGG:] + filesLGG[test_idx_LGG:]
 
         # Randomize the order of the files we have picked
         if randomize:
-            random.shuffle(self.train_files)
+            random.shuffle(self.training_files)
             random.shuffle(self.test_files)
             random.shuffle(self.validation_files)
 
+        #self.training_samples_c = len(self.training_files)
+        #self.test_samples_c = len(self.test_files)
+        #self.validation_samples_c = len(self.validation_files)
+
+        """
         # Reading the CSV
         self.csv_data = pd.read_csv(pathSurvival)
-
-        self.train_samples_c = len(self.train_files)
-        self.test_samples_c = len(self.test_files)
-        self.validation_samples_c = len(self.validation_files)
 
     def loadNext(self, files, c):
         """Blabla
@@ -88,8 +106,6 @@ class Data:
 
            Return stuff and id
         """
-        def standardize(data):
-            return (data-data.mean())/data.std()
         if len(self.pool) > 0:
             return self.pool.pop()
 
@@ -104,7 +120,7 @@ class Data:
 
         # Read the actual data
         mods = ["flair", "t1", "t1ce", "t2"]
-        X_train = np.stack([standardize(nib.load(self.PATH+gtype+"/"+target+"/"+target+"_"+mod+".nii.gz").get_data()) for mod in mods], axis=-1)
+        X_train = np.stack([self.standardize(nib.load(self.PATH+gtype+"/"+target+"/"+target+"_"+mod+".nii.gz").get_data()) for mod in mods], axis=-1)
 
         if self.depth_first:
             X_train = np.moveaxis(X_train, 2, 0)
@@ -174,7 +190,7 @@ class Data:
     def getNextTrainingBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
 
-        d_tmp = self.loadNext(self.train_files, 0)
+        d_tmp = self.loadNext(self.getFiles("training"), 0)
         if d_tmp is None:
             return None
         X_train, Y_train, age, survival, target = d_tmp
@@ -185,7 +201,7 @@ class Data:
 
     def getNextTestBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
-        d_tmp = self.loadNext(self.test_files, 1)
+        d_tmp = self.loadNext(self.getFiles("test"), 1)
         if d_tmp is None:
             return None
         X_test, Y_test, age, survival, target = d_tmp
@@ -195,7 +211,7 @@ class Data:
 
     def getNextValidationBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
-        d_tmp = self.loadNext(self.validation_files, 2)
+        d_tmp = self.loadNext(self.getFiles("validation"), 2)
         if d_tmp is None:
             return None
         X_val, Y_val, age, survival, target = d_tmp

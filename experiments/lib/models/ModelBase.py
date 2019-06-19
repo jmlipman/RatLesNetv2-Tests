@@ -98,7 +98,7 @@ class ModelBase:
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
                 val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
-                val_loss += val_loss_tmp * 1/data.validation_samples_c
+                val_loss += val_loss_tmp * 1/len(data.validation_files)
                 d_tmp = data.getNextValidationBatch()
 
             val_loss_text = " Val Loss: {}".format(val_loss)
