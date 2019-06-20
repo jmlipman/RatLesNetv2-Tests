@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 class BaseData:
     def __init__(self):
@@ -18,7 +19,7 @@ class BaseData:
 
     def split(self, folds, prop=[0.7, 0.2, 0.1]):
         """This function will split the data. Split is expected to balance
-           the content of self.groups so that the proportion is the same.
+           the content of `self.groups` so that the proportion is the same.
            Depending on the number of folds, the splitting is different:
            
            folds = -1: TODO. Leave-one-out. Maybe it makes no sense, no val.
@@ -39,6 +40,7 @@ class BaseData:
             for g in self.groups:
                 random.shuffle(g)
 
+        # Regular split 0.7, 0.2, 0.1 (or any other proportion)
         if folds == 1:
             self.all_training_files = [[] for _ in range(folds)]
             self.all_test_files = [[] for _ in range(folds)]
@@ -57,6 +59,7 @@ class BaseData:
                 random.shuffle(self.all_test_files[0])
                 random.shuffle(self.all_validation_files[0])
 
+        # For N-fold cross-validation
         elif folds > 1:
             self.all_training_files = [[] for _ in range(folds)]
             self.all_test_files = [[] for _ in range(folds)]
@@ -72,10 +75,14 @@ class BaseData:
                     i += 1
                     if i == folds:
                         i = 0
+
                 for i in range(folds):
                     tmp_training_files_ = list(set(g) - set(tmp_test_files[i]))
-                    tmp_validation_files = tmp_training_files_[:int(len(tmp_training_files)*0.1)]
-                    tmp_training_files = tmp_training_files_[int(len(tmp_training_files)*0.1):]
+                    how_many_validation = int(len(tmp_training_files_)*0.1)
+                    if how_many_validation == 0:
+                        how_many_validation = 1
+                    tmp_validation_files = tmp_training_files_[:how_many_validation]
+                    tmp_training_files = tmp_training_files_[how_many_validation:]
 
                     self.all_training_files[i].extend(tmp_training_files)
                     self.all_test_files[i].extend(tmp_test_files[i])
@@ -84,14 +91,17 @@ class BaseData:
             raise Exception("Not implemented yet!")
 
         self.current_fold = 0
-        """
-                print(len(self.all_training_files[i]))
-                print(len(self.all_test_files[i]))
-                print(len(self.all_validation_files[i]))
-                print("===")
-        """
 
     def getFiles(self, which):
+        """This function will retrieve the list of files in the corresponding
+           fold.
+
+           Args:
+            `which`: which list of files (training, test, validation)
+
+           Returns:
+            The requested list of files.
+        """
         if which == "training":
             return self.all_training_files[self.current_fold]
         elif which == "test":
@@ -103,7 +113,29 @@ class BaseData:
         
 
     def nextFold(self):
+        """This function will shift the current fold.
+        """
         self.current_fold += 1
+
+    def loadInMemory(self):
+        """This function will load into memory all samples.
+        """
+        self.loading_in_memory = True
+        for nextBatch in [self.getNextTrainingBatch, self.getNextTestBatch,
+                self.getNextValidationBatch]:
+            prev_batch = self.batch
+            self.batch = 1
+            d_tmp = nextBatch()
+            while d_tmp != None:
+                X, Y, ids = d_tmp
+                for id_ in ids:
+                    self.X_container[id_] = X
+                    self.Y_container[id_] = Y
+                d_tmp = nextBatch()
+
+            self.batch = prev_batch
+        self.loading_in_memory = False
+        print("Done loading")
 
     # Processing operations
     def standardize(self, data):
@@ -111,3 +143,16 @@ class BaseData:
         """
         return (data-data.mean())/data.std()
 
+    def one_hot(self, arr, classes):
+        """This function will convert an int array into a one-hot vector.
+
+           Args:
+            `arr`: array to be converted.
+            `classes`: number of classes.
+
+           Returns:
+            One-hot vector.
+        """
+        if not type(arr) is np.ndarray:
+            raise Exception("array must be numpy array!")
+        return np.stack([(arr==i)*1.0 for i in range(classes)], axis=-1)

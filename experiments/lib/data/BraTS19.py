@@ -6,14 +6,9 @@ import random
 from scipy import ndimage
 from experiments.lib.data.BaseData import BaseData
 
-def hotvector(arr, classes):
-    if not type(arr) is np.ndarray:
-        raise Exception("array must be numpy array!")
-    return np.stack([(arr==i)*1.0 for i in range(classes)], axis=-1)
-
 #########data.split(folds=1, prop=[0.7, 0.2, 0.1])
 class Data(BaseData):
-    def __init__(self, randomize=False, depth_first=True, only_GTR=False, sliced=False, bounding_box=True):
+    def __init__(self, batch=1, randomize=False, depth_first=True, only_GTR=False, sliced=False, bounding_box=True):
         """In the initializer we gather the location of the files that will
            be used for training, testing and validation.
            Counters will be set to 0, so that during the data retrieval
@@ -65,34 +60,6 @@ class Data(BaseData):
 
         self.groups = [filesHGG, filesLGG]
 
-        # Randomize the files we firstly pick
-        """
-        if randomize:
-            random.shuffle(filesHGG)
-            random.shuffle(filesLGG)
-
-        # 70% Training, 20% Testing, 10% Validation
-        train_idx_HGG = int(totalHGG*0.7)
-        test_idx_HGG = int(totalHGG*0.2) + train_idx_HGG
-        train_idx_LGG = int(totalLGG*0.7)
-        test_idx_LGG = int(totalLGG*0.2) + train_idx_LGG
-
-
-        self.training_files = filesHGG[:train_idx_HGG] + filesLGG[:train_idx_LGG]
-        self.test_files = filesHGG[train_idx_HGG:test_idx_HGG] + filesLGG[train_idx_LGG:test_idx_LGG]
-        self.validation_files = filesHGG[test_idx_HGG:] + filesLGG[test_idx_LGG:]
-
-        # Randomize the order of the files we have picked
-        if randomize:
-            random.shuffle(self.training_files)
-            random.shuffle(self.test_files)
-            random.shuffle(self.validation_files)
-
-        #self.training_samples_c = len(self.training_files)
-        #self.test_samples_c = len(self.test_files)
-        #self.validation_samples_c = len(self.validation_files)
-
-        """
         # Reading the CSV
         self.csv_data = pd.read_csv(pathSurvival)
 
@@ -132,7 +99,7 @@ class Data(BaseData):
         if self.depth_first:
             Y_train = np.moveaxis(Y_train, 2, 0)
         Y_train[Y_train==4] = 3
-        Y_train = hotvector(Y_train, 4)
+        Y_train = self.one_hot(Y_train, 4)
 
         Y_train = np.expand_dims(Y_train, 0)
 
@@ -197,7 +164,6 @@ class Data(BaseData):
         X = {"in_volume": X_train}
         Y = {"out_segmentation": Y_train}
         return X, Y, target
-
 
     def getNextTestBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
