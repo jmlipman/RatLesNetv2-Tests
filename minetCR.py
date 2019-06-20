@@ -1,22 +1,15 @@
 from sacred.observers import FileStorageObserver
 from experiments.RegularTrainingTest import ex
 from experiments.lib.util import Twitter
-from experiments.lib.models.MiNetBratsModel import MiNetBrats
-from experiments.lib.data.dataCR import Data
+from experiments.lib.models.MiNetCRModel import MiNetCR
+from experiments.lib.data.CR02NOV16 import Data
 import tensorflow as tf
-import itertools
+import itertools, os
 
 BASE_PATH = "results_MiNet/minet_d2_concat2_BN"
 messageTwitter = "minet_d2_concat2"
 
-# 12 -> ok
-# 13 -> ok
-# 14 -> ok
-# 15 -> ok
-# 16 -> memory error. 2506050 > 516096
-# 17 -> memory error. 2740366 > 516096
-# sbatch mem is 4096, priority is 1622
-# sbatch mem is 512, priority is 1620
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # Fixed configuration
 config = {}
@@ -30,10 +23,10 @@ config["config.batch"] = 1
 config["config.initW"] = tf.keras.initializers.he_normal()
 config["config.initB"] = tf.constant_initializer(0)
 config["config.act"] = "relu"
-config["config.classes"] = 4
+config["config.classes"] = 2
 config["config.alpha_l2"] = 0.01 # Typical value
 config["config.early_stopping_c"] = 99
-config["Model"] = MiNetBrats
+config["Model"] = MiNetCR
 config["Data"] = Data
 
 for _ in [1]:

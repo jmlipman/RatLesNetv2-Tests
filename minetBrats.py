@@ -4,7 +4,9 @@ from experiments.lib.util import Twitter
 from experiments.lib.models.MiNetBratsModel import MiNetBrats
 from experiments.lib.data.BraTS19 import Data
 import tensorflow as tf
-import itertools
+import itertools, os
+
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 BASE_PATH = "results_MiNet/minet_d2_concat2_BN"
 messageTwitter = "minet_d2_concat2"

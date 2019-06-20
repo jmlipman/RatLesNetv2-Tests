@@ -2,7 +2,6 @@ from experiments.lib.models.MiNetBratsModel import MiNetBrats
 from sacred import Experiment
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 ex = Experiment("RegularTrainingTest")
 

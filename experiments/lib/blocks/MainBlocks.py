@@ -54,7 +54,7 @@ class BlockBase:
 
 class Unpooling3DBlock(BlockBase):
 
-    def __init__(self, maxpooled, maxpooled_inputs, factor=(2,2,2)):
+    def __init__(self, maxpooled, maxpooled_inputs, factor=(2,2,2), skip_connection=False):
         """Unpooling3DBlock. This operation performs the opposite operation of
            Maxpooling. It will calculate the indices where the maxpooling
            extracted the max values and it will propagate new values.
@@ -65,6 +65,7 @@ class Unpooling3DBlock(BlockBase):
             `maxpooled_inputs`: Input of the maxpooling operation we want
              to restore.
             `factor`: upsampling factor.
+            `skip_connections`: False, concat or sum.
 
            Returns:
             Tensor with the final operation after the unpooling.
@@ -74,6 +75,7 @@ class Unpooling3DBlock(BlockBase):
         self.maxpooled = maxpooled
         self.maxpooled_inputs = maxpooled_inputs
         self.factor = factor
+        self.skip_connection = skip_connection
 
     def __call__(self, input):
 
@@ -84,6 +86,13 @@ class Unpooling3DBlock(BlockBase):
             # them by the activation maps.
             reshaped = UpSampling3DBlock(grads.shape[1:-1])(input)
             output = reshaped * grads
+
+            if self.skip_connection == "concat":
+                output = CombineBlock([output, self.maxpooled_inputs]).concat()
+            elif self.skip_connection == "sum":
+                output = CombineBlock([output, self.maxpooled_inputs]).sum()
+
+
 
         return output
         # Using keras's upsampling is frustrating because it does not
