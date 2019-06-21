@@ -16,6 +16,7 @@ class Data(BaseData):
            It will also read the survival CSV.
 
            Args:
+           `batch`: batch size.
            `randomize`: If True, every time this is executed the data within
             the splits for training, test and validation will be different.
             `depth_first`: As TF requires BDWHC, if this is True then the
@@ -23,6 +24,8 @@ class Data(BaseData):
             `only_GTR`: As BraTS only wants us to calculate the survival day
             on those who were GTR, if this is True then it will return None
             instead of the Age and Survival days in those cases it is not GTR.
+            `sliced`: whether the data is sliced.
+            `bounding_box`: whether to use the data contained in the bounding box
         """
         # Get the lists
         pc_name = os.uname()[1]
@@ -64,21 +67,26 @@ class Data(BaseData):
         self.csv_data = pd.read_csv(pathSurvival)
 
     def loadNext(self, files, c):
-        """Blabla
+        """This function will load the next sample from the dataset.
 
-           In this function I am assuming the following:
-            - Size of the nifti files is the same (# of voxels)
-            - We have all the modalities and segmentation per subject
-           I can assume this because I checked it (assumptions.py).
+           Args:
+            `files`: list of file locations that contain the data to be loaded.
+            `c`: indicates which split of the dataset to use (train, test, val)
 
-           Return stuff and id
+           Returns:
+            Data needed for the neural network, including X, Y, and ids.
         """
+
+        # In case data is sliced. If there is some data in this pool
+        # we simply retrieve it until it is empty.
         if len(self.pool) > 0:
             return self.pool.pop()
 
+        # If I have already retrieved all data, return None
         if self.counters[c] == len(files):
             self.counters[c] += 1
             return None
+        # Next time, it will start over
         elif self.counters[c] > len(files):
             self.counters[c] = 0
 
@@ -103,6 +111,7 @@ class Data(BaseData):
 
         Y_train = np.expand_dims(Y_train, 0)
 
+        # Filtering some data based on the initial parameters.
         age, survival = None, None
         if target in list(self.csv_data["BraTS19ID"]):
             row = self.csv_data[self.csv_data["BraTS19ID"].str.contains(target)]
@@ -130,14 +139,14 @@ class Data(BaseData):
         self.counters[c] += 1
 
         if self.bounding_box:
-            #loc = ndimage.find_objects(1*(X_train!=0))[0]
-
             # Fixed way. Resulting images are: (138, 173, 172)
+            # This is a bounding box that contains all samples.
             loc = (slice(0, 1, None), slice(8, 146, None), slice(40, 213, None), slice(49, 221, None))
             X_train = X_train[loc]
             Y_train = Y_train[loc]
 
         elif self.sliced:
+            # Slicing the data, adding it to the pool.
             self.pool.append((X_train[:,:128,:128,:128,:], Y_train[:,:128,:128,:128,:], age, survival, [gtype+"_"+target]))
             self.pool.append((X_train[:,:128,:128,-128:,:], Y_train[:,:128,:128,-128:,:], age, survival, [gtype+"_"+target]))
             self.pool.append((X_train[:,:128,-128:,:128,:], Y_train[:,:128,-128:,:128,:], age, survival, [gtype+"_"+target]))
@@ -150,6 +159,7 @@ class Data(BaseData):
             random.shuffle(self.pool)
             tmp = self.pool.pop()
             return tmp
+
         # The ID must be a list, so that I can later iterate over it
         return X_train, Y_train, age, survival, [gtype+"_"+target]
 
@@ -185,31 +195,3 @@ class Data(BaseData):
         Y = {"out_segmentation": Y_val}
         return X, Y, target
 
-"""
-data = Data()
-for e in range(1):
-    print("Epoch: "+str(e))
-    d_tmp = data.getNextTrainingSubject()
-    while d_tmp != None:
-        X_train, Y_train, age, survival = d_tmp
-        print(X_train.shape, Y_train.shape, age, survival)
-        d_tmp = data.getNextTrainingSubject()
-"""
-
-"""
-# Calculating the bounding box of all
-path = "/home/miguelv/Downloads/MICCAI_BraTS_2019_Data_Training/"
-all_brains = np.zeros((240,240,155))
-c = 0
-for root, subdirs, files in os.walk(path):
-    c += 1
-    print(c)
-    for f in files:
-        if f.endswith(".nii.gz"):
-            brain = 1*(nib.load(root + "/" + f).get_data()!=0)
-        all_brains += brain
-
-loc = ndimage.find_objects(all_brains.astype(int))[0]
-print(loc)
-print(all_brains[loc].shape)
-"""

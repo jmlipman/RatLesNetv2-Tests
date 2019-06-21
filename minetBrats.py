@@ -35,6 +35,7 @@ config["config.act"] = "relu"
 config["config.classes"] = 4
 config["config.alpha_l2"] = 0.01 # Typical value
 config["config.early_stopping_c"] = 99
+config["config.find_weights"] = ""
 config["Model"] = MiNetBrats
 config["Data"] = Data
 

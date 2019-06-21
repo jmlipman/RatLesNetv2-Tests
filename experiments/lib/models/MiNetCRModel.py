@@ -41,6 +41,7 @@ class MiNetCR(ModelBase):
            Part 2: Weighted cross entropy among all classifiers.
            Part 3: Regular cross entropy.
         """
+        # I don't need to create a model if I will load it
 
         # Regular cross entropy between the final output and the labels
         # Cross_entropy -> same size as the images without the channels: 18, 256, 256
@@ -51,6 +52,7 @@ class MiNetCR(ModelBase):
 
     def create_model(self):
         tf.reset_default_graph()
+
         self.placeholders = {}
         self.placeholders["in_volume"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 1])
         self.placeholders["out_segmentation"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 2])
@@ -99,3 +101,23 @@ class MiNetCR(ModelBase):
         self.logits = last
         self.prediction = tf.nn.softmax(self.logits)
 
+    def checkSaveModel(self, epoch, val_loss):
+        """This function will decide whether to save the current model or
+           not. It is being executed after the epoch and the validation are
+           performed during the training. In order to decide whether to save
+           the model we can use the parameters provided.
+
+           For example, it might be interesting to save only certain epochs
+           (at the end of the training) or the models with the lowest val_loss.
+
+           Args:
+            `epoch`: current epoch.
+            `val_loss`: validation loss.
+
+           Returns:
+            (bool) Whether to save the model.
+        """
+        if epoch % 2 == 0:
+            return True
+
+        return False

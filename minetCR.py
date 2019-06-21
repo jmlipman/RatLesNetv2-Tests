@@ -6,14 +6,14 @@ from experiments.lib.data.CR02NOV16 import Data
 import tensorflow as tf
 import itertools, os
 
-BASE_PATH = "results_MiNet/minet_d2_concat2_BN"
+BASE_PATH = "results_MiNet/delete/"
 messageTwitter = "minet_d2_concat2"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # Fixed configuration
 config = {}
-config["config.lr"] = 1e-8
+config["config.lr"] = 1e-5
 #config["config.weight_decay"] = 1e-4
 config["config.opt"] = tf.train.AdamOptimizer(learning_rate=config["config.lr"])
 #config["config.opt"] = tf.contrib.opt.AdamWOptimizer(weight_decay=config["weight_decay"], learning_rate=config["lr"])
@@ -26,6 +26,10 @@ config["config.act"] = "relu"
 config["config.classes"] = 2
 config["config.alpha_l2"] = 0.01 # Typical value
 config["config.early_stopping_c"] = 99
+config["config.find_weights"] = "/home/miguelv/MiNet/results_MiNet/delete/growthrate_16/1/weights/w-15"
+#config["config.find_weights"] = ""
+config["config.growth_rate"] = 16
+config["config.concat"] = 2
 config["Model"] = MiNetCR
 config["Data"] = Data
 

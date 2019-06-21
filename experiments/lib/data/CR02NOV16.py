@@ -16,6 +16,7 @@ class Data(BaseData):
            It will also read the survival CSV.
 
            Args:
+           `batch`: batch size.
            `randomize`: If True, every time this is executed the data within
             the splits for training, test and validation will be different.
             `depth_first`: As TF requires BDWHC, if this is True then the
@@ -49,6 +50,7 @@ class Data(BaseData):
         # Counters for training, testing and validation
         self.counters = [0, 0, 0]
 
+        # 4 different groups that need to be balanced
         lesion2h = []
         no_lesion2h = []
         lesion24h = []
@@ -70,20 +72,21 @@ class Data(BaseData):
         self.groups = [lesion2h, no_lesion2h, lesion24h, no_lesion24h]
 
     def loadNext(self, files, c):
-        """This function loads the next files.
+        """This function will load the next sample from the dataset.
 
-           In this function I am assuming the following:
-            - Size of the nifti files is the same (# of voxels)
-            - We have all the modalities and segmentation per subject
-           I can assume this because I checked it (assumptions.py).
+           Args:
+            `files`: list of file locations that contain the data to be loaded.
+            `c`: indicates which split of the dataset to use (train, test, val)
 
-           Return stuff and id
+           Returns:
+            Data needed for the neural network, including X, Y, and ids.
         """
 
-        # When the index is over, first return None, then restart.
+        # If I have already retrieved all data, return None
         if self.counters[c] == len(files):
             self.counters[c] += 1
             return None
+        # Next time, it will start over
         elif self.counters[c] > len(files):
             self.counters[c] = 0
 
@@ -91,13 +94,12 @@ class Data(BaseData):
         timepoint, subject = target.split("/")[-3:-1]
         id_ = timepoint+"_"+subject
 
+        # This if controls that the behavior is different when the container
+        # used when loadInMemory is not empty.
         if len(self.X_container.keys()) > 0 and not self.loading_in_memory:
-            #return corresponding data
-            #if empty, fill
             X_train = self.X_container[id_]["in_volume"]
             Y_train = self.Y_container[id_]["out_segmentation"]
         else:
-
             # Read the actual data
             X_train = nib.load(target+"scan.nii.gz").get_data()
 
@@ -125,6 +127,7 @@ class Data(BaseData):
     def getNextTrainingBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
         # Take care of the batch thing in here
+
         d_tmp = self.loadNext(self.getFiles("training"), 0)
         if d_tmp is None:
             return None
@@ -154,31 +157,3 @@ class Data(BaseData):
         Y = {"out_segmentation": Y_val}
         return X, Y, target
 
-"""
-data = Data()
-for e in range(1):
-    print("Epoch: "+str(e))
-    d_tmp = data.getNextTrainingSubject()
-    while d_tmp != None:
-        X_train, Y_train, age, survival = d_tmp
-        print(X_train.shape, Y_train.shape, age, survival)
-        d_tmp = data.getNextTrainingSubject()
-"""
-
-"""
-# Calculating the bounding box of all
-path = "/home/miguelv/Downloads/MICCAI_BraTS_2019_Data_Training/"
-all_brains = np.zeros((240,240,155))
-c = 0
-for root, subdirs, files in os.walk(path):
-    c += 1
-    print(c)
-    for f in files:
-        if f.endswith(".nii.gz"):
-            brain = 1*(nib.load(root + "/" + f).get_data()!=0)
-        all_brains += brain
-
-loc = ndimage.find_objects(all_brains.astype(int))[0]
-print(loc)
-print(all_brains[loc].shape)
-"""

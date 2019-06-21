@@ -2,6 +2,8 @@
 import numpy as np
 
 
+# TODO: MAKE THIS SO THAT CHECKS ARE FIXED
+
 def checkBatches(getBatch):
     c= 0
     batch_sizes = set()
@@ -39,9 +41,12 @@ def checkBatches(getBatch):
     print("> Size X samples: "+str(size_x))
     print("> Size Y samples: "+str(size_y))
 
+    return str(c), str(batch_sizes), str(size_x), str(size_y)
+
 
 
 run_tests = ["CR02NOV16_1fold", "CR02NOV16_5folds", "BraTS_1fold"]
+run_tests = ["BraTS_1fold"]
 
 
 if "CR02NOV16_1fold" in run_tests:
@@ -55,15 +60,27 @@ if "CR02NOV16_1fold" in run_tests:
     ##############################
     print("Train")
     print("Expected number of samples: "+str(len(data.all_training_files[0])))
-    checkBatches(data.getNextTrainingBatch)
+    c, bs, sx, sy = checkBatches(data.getNextTrainingBatch)
+    assert c == "32"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+    assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
 
     print("Test")
     print("Expected number of samples: "+str(len(data.all_test_files[0])))
-    checkBatches(data.getNextTestBatch)
+    c, bs, sx, sy = checkBatches(data.getNextTestBatch)
+    assert c == "8"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+    assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
 
     print("Validation")
     print("Expected number of samples: "+str(len(data.all_validation_files[0])))
-    checkBatches(data.getNextValidationBatch)
+    c, bs, sx, sy = checkBatches(data.getNextValidationBatch)
+    assert c == "8"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+    assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
 
 if "CR02NOV16_5folds" in run_tests:
     print("Test: CR02NOV16_5folds")
@@ -75,21 +92,36 @@ if "CR02NOV16_5folds" in run_tests:
     # Batch consistency check    #
     # For RegularTrainingTest.py #
     ##############################
-    for _ in range(5):
+    ctr = ["32", "32", "36", "36", "36"]
+    cte = ["12", "12", "8", "8", "8"]
+    cva = ["4", "4", "4", "4", "4"]
+    for f in range(5):
+        print("FOLD "+str(f))
         print("Train")
         print("Expected number of samples: "+str(len(data.all_training_files[0])))
-        checkBatches(data.getNextTrainingBatch)
+        c, bs, sx, sy = checkBatches(data.getNextTrainingBatch)
+        assert c == ctr[f]
+        assert bs == "{1}"
+        assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+        assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
 
         print("Test")
         print("Expected number of samples: "+str(len(data.all_test_files[0])))
-        checkBatches(data.getNextTestBatch)
+        c, bs, sx, sy = checkBatches(data.getNextTestBatch)
+        assert c == cte[f]
+        assert bs == "{1}"
+        assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+        assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
 
         print("Validation")
         print("Expected number of samples: "+str(len(data.all_validation_files[0])))
-        checkBatches(data.getNextValidationBatch)
+        c, bs, sx, sy = checkBatches(data.getNextValidationBatch)
+        assert c == cva[f]
+        assert bs == "{1}"
+        assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+        assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
         print("Total samples: "+str(len(data.all_validation_files[0]) + len(data.all_training_files[0]) + len(data.all_test_files[0])))
         data.nextFold()
-
 
 if "BraTS_1fold" in run_tests:
     print("Test: BraTS_1fold")
@@ -102,14 +134,27 @@ if "BraTS_1fold" in run_tests:
     ##############################
     print("Train")
     print("Expected number of samples: "+str(len(data.all_training_files[0])))
-    checkBatches(data.getNextTrainingBatch)
+    c, bs, sx, sy = checkBatches(data.getNextTrainingBatch)
+    assert c == "234"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 138, 173, 172, 4)}}"
+    assert sy == "{'out_segmentation': {(1, 138, 173, 172, 4)}}"
 
     print("Test")
     print("Expected number of samples: "+str(len(data.all_test_files[0])))
-    checkBatches(data.getNextTestBatch)
+    c, bs, sx, sy = checkBatches(data.getNextTestBatch)
+    assert c == "66"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 138, 173, 172, 4)}}"
+    assert sy == "{'out_segmentation': {(1, 138, 173, 172, 4)}}"
 
     print("Validation")
     print("Expected number of samples: "+str(len(data.all_validation_files[0])))
-    checkBatches(data.getNextValidationBatch)
+    c, bs, sx, sy = checkBatches(data.getNextValidationBatch)
+    assert c == "35"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 138, 173, 172, 4)}}"
+    assert sy == "{'out_segmentation': {(1, 138, 173, 172, 4)}}"
+
     print("Total samples: "+str(len(data.all_validation_files[0]) + len(data.all_training_files[0]) + len(data.all_test_files[0])))
 

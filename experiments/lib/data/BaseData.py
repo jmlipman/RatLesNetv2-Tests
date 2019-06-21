@@ -116,6 +116,7 @@ class BaseData:
         """This function will shift the current fold.
         """
         self.current_fold += 1
+        self.counters = [0, 0, 0]
 
     def loadInMemory(self):
         """This function will load into memory all samples.
@@ -137,7 +138,10 @@ class BaseData:
         self.loading_in_memory = False
         print("Done loading")
 
-    # Processing operations
+    ##############################
+    # Data processing operations #
+    ##############################
+
     def standardize(self, data):
         """Zero-mean one-variance
         """

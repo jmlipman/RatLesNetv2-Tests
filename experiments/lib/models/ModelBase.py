@@ -17,14 +17,50 @@ class ModelBase:
        of their configuration needs such as a training routine.
     """
     def __init__(self):
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1)
-        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1)
 
-        #self.sess = tf.Session()
+        # Create a folder if it does not exist
+        if not os.path.isdir(self.config["base_path"] +  "weights"):
+            os.makedirs(self.config["base_path"] + "weights")
+
+        # Load weights if needed
+        if self.config["find_weights"] != "":
+            self.load_model()
+        else:
+            self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+            self.saver = tf.train.Saver()
+
         self.tb = TB_Log(self.config["base_path"], self.sess)
         numParam = np.sum([np.prod(v.shape) for v in tf.trainable_variables()])
         print("Number of parameters: "+str(numParam))
-        #raise Exception("llego")
+
+    def load_model(self):
+        """This function will load an existing model (graph + weights).
+           I could simply load the weights without loading a graph but this
+           would force me to initialize exactly the same graph, which might
+           be difficult.
+        """
+        # I need to reset the graph because it was created assuming there were
+        # no weights to load. Now we will load the graph and its weights.
+        tf.reset_default_graph()
+        # Load the graph. Unnecessary if I can create it again.
+        self.saver = tf.train.import_meta_graph(self.config["find_weights"] + ".meta")
+
+        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+        # Load the weights
+        pathd = "/".join(self.config["find_weights"].split("/")[:-1])
+        self.saver.restore(self.sess,tf.train.latest_checkpoint(pathd))
+
+        # Load the tensors/ops in their respective variables
+        with open(pathd + "/tensors", "r") as f:
+            placeholders, prediction, train_step, loss = json.loads(f.read())
+
+        self.placeholders = {}
+        for pl in placeholders.keys():
+            self.placeholders[pl] = self.prediction = tf.get_default_graph().get_tensor_by_name(placeholders[pl])
+        self.prediction = tf.get_default_graph().get_tensor_by_name(prediction)
+        self.loss = tf.get_default_graph().get_tensor_by_name(loss)
+        self.train_step = tf.get_default_graph().get_operation_by_name(train_step)
 
     def create_loss(self):
         """Creates the loss to be minimized.
@@ -35,6 +71,8 @@ class ModelBase:
         """Optimizer to train the network.
         """
         self.train_step = self.config["opt"].minimize(self.loss)
+        #print(type(self.train_step))
+        #print(self.train_step)
 
     def train(self, data):
         """This method will train the network given some data.
@@ -45,8 +83,8 @@ class ModelBase:
            Args:
             `data`: data wrapper. It must follow some rules.
         """
-
-        self.sess.run(tf.global_variables_initializer())
+        if self.config["find_weights"] == "":
+            self.sess.run(tf.global_variables_initializer())
         ep = self.config["epochs"]
         bs = self.config["batch"]
         early_stopping_c = 0
@@ -72,18 +110,9 @@ class ModelBase:
 
                 it += 1
 
-                #feeding = {self.x_input: X_train, self.y_true: Y_train}
-				# I am not using weights for now, so this is fine
-				# If I happen to use weights, then add it to the "feeding" here
-
                 run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
                 _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
                 d_tmp = data.getNextTrainingBatch()
-
-            # Save weights every 2 epochs
-            if e % 2 == 0:
-                saver = tf.train.Saver()
-                saver.save(self.sess, self.config["base_path"] + "weights-"+str(e))
 
             # Validation (after each epoch)
             d_tmp = data.getNextValidationBatch()
@@ -104,6 +133,16 @@ class ModelBase:
             val_loss_text = " Val Loss: {}".format(val_loss)
             self.tb.add_scalar(val_loss, "val_loss", e)
 
+            # Routine to save the model
+            if self.checkSaveModel(e, val_loss) or True:
+                self.saver.save(self.sess, self.config["base_path"] + "weights/w-"+str(e))
+                # I also save the name of the tensors of the placeholders and pred
+                with open(self.config["base_path"] + "weights/tensors", "w") as f:
+                    save_pl = {}
+                    for k in self.placeholders.keys():
+                        save_pl[k] = self.placeholders[k].name
+                    f.write(json.dumps([save_pl, self.prediction.name, self.train_step.name, self.loss.name]))
+
             # Early stopping
             if prev_val_loss < val_loss:
                 early_stopping_c += 1
@@ -121,99 +160,6 @@ class ModelBase:
             # If we are getting NaNs, it's pointless to continue
             if np.isnan(tr_loss):
                 keep_training = False
-
-
-    def train_(self, x_train, y_train, x_val=None, y_val=None, x_train_weights=None, x_val_weights=None):
-        """Training routine.
-
-           Args:
-            `x_train`: numpy.array containing the training data. Format NDHWC.
-            `y_train`: numpy.array containing the labels of the training data.
-                       Format NDHWL. L indicates the Labels one-hot encoded.
-            `x_val`: same as x_train but for validation.
-            `y_val`: same as y_train but for validation.
-            `x_train_weights`: optional weights used in the calculation of the
-             loss function. They need to have the same shape as `x_train`.
-            `x_val_weights`: sames as `x_train_weights` for the validation set.
-
-           Returns:
-            None. Simply trains the model.
-        """
-        # NOTE: REDO
-        self.sess.run(tf.global_variables_initializer())
-        N = x_train.shape[0]
-        ep = self.config["epochs"]
-        bs = self.config["batch"]
-        early_stopping_c = 0
-        prev_val_loss = 99999999
-        val_loss_text = ""
-        e = 0 # Epoch counter
-        it = 0 # Iteration counter
-        losses = [] # Training and validation error
-        keep_training = True # Flag to stop training when overfitting occurs.
-
-        log("Starting training")
-        while e < ep and keep_training:
-            idx = [i for i in range(N)]
-            #random.shuffle(idx)
-            x_train = x_train[idx]
-            y_train = y_train[idx]
-            if not x_train_weights is None:
-                x_train_weights = x_train_weights[idx]
-
-            ba = 0 # Mini-batch index
-
-            while ba < N and keep_training:
-                it += 1
-                X = x_train[ba:ba+bs]
-                Y = y_train[ba:ba+bs]
-
-                feeding = {self.x_input: X, self.y_true: Y}
-                if not x_train_weights is None:
-                    feeding[self.x_weights] = x_train_weights[ba:ba+bs]
-
-                run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
-                _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
-                #_, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict={self.x_input: X, self.y_true: Y})
-
-                ba += bs # End loop - batch
-
-            # Validation
-            if not x_val is None and not y_val is None:
-                log("Performing validation")
-                ba = 0 # Mini-batch index
-                val_loss = 0
-                while ba < x_val.shape[0]:
-                    X = x_val[ba:ba+bs]
-                    Y = y_val[ba:ba+bs]
-
-                    feeding = {self.x_input: X, self.y_true: Y}
-                    if not x_train_weights is None:
-                        feeding[self.x_weights] = x_val_weights[ba:ba+bs]
-
-                    #val_loss += self.sess.run(self.loss, feed_dict={self.x_input: X, self.y_true: Y}) * 1/x_val.shape[0]
-                    val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
-                    val_loss += val_loss_tmp * 1/x_val.shape[0]
-                    print(self.measure_dice(pred_tmp, Y, False))
-                    ba += bs # End loop - Validation
-                val_loss_text = " Val Loss: {}".format(val_loss)
-                self.tb.add_scalar(val_loss, "val_loss", e)
-                if prev_val_loss < val_loss:
-                    early_stopping_c += 1
-                else:
-                    early_stopping_c = 0
-                prev_val_loss = val_loss
-                if early_stopping_c >= self.config["early_stopping_c"]:
-                    keep_training = False
-
-            log("Epoch: {}. Loss: {}.".format(e, tr_loss) + val_loss_text)
-            self.tb.add_scalar(tr_loss, "train_loss", e)
-            # Save in Tensorboard
-
-            # If we are getting NaNs, it's pointless to continue
-            if np.isnan(tr_loss):
-                keep_training = False
-            e += 1
 
 
     def predict(self, data, save=False):
@@ -238,7 +184,7 @@ class ModelBase:
             X = d_tmp[0]
             # List of IDs of each subject
             ids = d_tmp[-1]
-            pred = self.predict_batch(X)
+            pred = self.predictBatch(X)
 
             # Iterate over all possible predicted subjects
             for i in range(len(ids)):
@@ -247,7 +193,7 @@ class ModelBase:
 
             d_tmp = data.getNextTestBatch()
 
-    def predict_batch(self, X):
+    def predictBatch(self, X):
         """Predicts a single batch.
 
            Args:
@@ -292,7 +238,7 @@ class ModelBase:
             Y = d_tmp[1]
             # List of IDs of each subject
             ids = d_tmp[2]
-            pred = self.predict_batch(X)
+            pred = self.predictBatch(X)
             res = self.measure(pred, Y)
 
             # Iterate over all possible predicted subjects
@@ -325,41 +271,3 @@ class ModelBase:
 
         return dice_coeff
 
-    '''
-    def measure_dice(self, y_pred, y_true, save=False):
-        """This function calculates the dice coefficient.
-
-           Args:
-            `preds`: numpy.array containing the predictions. Format NDHWC.
-            `y_test`: Labels.
-
-           Returns:
-            Dice coeff. per volume.
-        """
-        # NOTE: REDO
-        if save:
-            np.save(self.config["base_path"] + "y_pred", y_pred)
-            np.save(self.config["base_path"] + "y_true", y_true)
-
-        num_samples = y_pred.shape[0]
-        num_classes = y_pred.shape[-1]
-        results = np.zeros((num_classes, num_samples))
-        y_pred = np.argmax(y_pred, axis=-1)
-        y_true = np.argmax(y_true, axis=-1)
-
-        for i in range(num_classes): # 2 CLASSES, BACKGROUND AND LESION
-            for j in range(num_samples):
-                a = y_pred[j]==i
-                b = y_true[j]==i
-                if np.sum(b) == 0: # If there is no lesion
-                    if np.sum(a) == 0: # If the model didn't predict lesion
-                        result = 1.0
-                    else:
-                        result = (np.sum(b==0)-np.sum(a))*1.0 / np.sum(b==0)
-                else:
-                    num = 2 * np.sum(a * b)
-                    denom = np.sum(a) + np.sum(b)
-                    result = num / denom
-                results[i, j] = result
-        return results
-    '''
