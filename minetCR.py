@@ -31,7 +31,7 @@ config["config.find_weights"] = "/home/miguelv/MiNet/results_MiNet/delete/growth
 config["config.growth_rate"] = 16
 config["config.concat"] = 2
 config["Model"] = MiNetCR
-config["Data"] = Data
+config["data"] = Data()
 
 for _ in [1]:
 

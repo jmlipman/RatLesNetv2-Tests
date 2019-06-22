@@ -96,10 +96,10 @@ class Data(BaseData):
 
         # This if controls that the behavior is different when the container
         # used when loadInMemory is not empty.
-        if len(self.X_container.keys()) > 0 and not self.loading_in_memory:
+        try:
             X_train = self.X_container[id_]["in_volume"]
             Y_train = self.Y_container[id_]["out_segmentation"]
-        else:
+        except:
             # Read the actual data
             X_train = nib.load(target+"scan.nii.gz").get_data()
 

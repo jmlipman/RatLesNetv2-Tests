@@ -37,7 +37,7 @@ config["config.alpha_l2"] = 0.01 # Typical value
 config["config.early_stopping_c"] = 99
 config["config.find_weights"] = ""
 config["Model"] = MiNetBrats
-config["Data"] = Data
+config["data"] = Data()
 
 for _ in [1]:
 

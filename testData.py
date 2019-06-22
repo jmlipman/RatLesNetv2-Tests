@@ -2,8 +2,6 @@
 import numpy as np
 
 
-# TODO: MAKE THIS SO THAT CHECKS ARE FIXED
-
 def checkBatches(getBatch):
     c= 0
     batch_sizes = set()
@@ -46,7 +44,7 @@ def checkBatches(getBatch):
 
 
 run_tests = ["CR02NOV16_1fold", "CR02NOV16_5folds", "BraTS_1fold"]
-run_tests = ["BraTS_1fold"]
+run_tests = ["CR02NOV16_1fold", "CR02NOV16_5folds"]
 
 
 if "CR02NOV16_1fold" in run_tests:
@@ -87,7 +85,7 @@ if "CR02NOV16_5folds" in run_tests:
     from experiments.lib.data.CR02NOV16 import Data
     data = Data()
     data.split(folds=5)
-    data.loadInMemory()
+    data.loadInMemory(["test"])
     ##############################
     # Batch consistency check    #
     # For RegularTrainingTest.py #

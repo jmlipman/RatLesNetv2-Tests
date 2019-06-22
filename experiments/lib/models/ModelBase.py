@@ -71,8 +71,6 @@ class ModelBase:
         """Optimizer to train the network.
         """
         self.train_step = self.config["opt"].minimize(self.loss)
-        #print(type(self.train_step))
-        #print(self.train_step)
 
     def train(self, data):
         """This method will train the network given some data.

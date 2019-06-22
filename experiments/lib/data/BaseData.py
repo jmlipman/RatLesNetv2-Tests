@@ -118,12 +118,21 @@ class BaseData:
         self.current_fold += 1
         self.counters = [0, 0, 0]
 
-    def loadInMemory(self):
+    def loadInMemory(self, nextBatches=None):
         """This function will load into memory all samples.
         """
-        self.loading_in_memory = True
-        for nextBatch in [self.getNextTrainingBatch, self.getNextTestBatch,
-                self.getNextValidationBatch]:
+        nextBatchesCollection = []
+        if nextBatches is None: # Load all data in memory
+            nextBatches = ["training", "test", "validation"]
+        # Load some data in memory
+        if "training" in nextBatches:
+            nextBatchesCollection.append(self.getNextTrainingBatch)
+        if "test" in nextBatches:
+            nextBatchesCollection.append(self.getNextTestBatch)
+        if "validation" in nextBatches:
+            nextBatchesCollection.append(self.getNextValidationBatch)
+
+        for nextBatch in nextBatchesCollection:
             prev_batch = self.batch
             self.batch = 1
             d_tmp = nextBatch()
