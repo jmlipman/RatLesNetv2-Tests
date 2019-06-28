@@ -1,44 +1,38 @@
 from sacred.observers import FileStorageObserver
 from experiments.RegularTrainingTest import ex
 from experiments.lib.util import Twitter
-from experiments.lib.models.MiNetBratsModel import MiNetBrats
-from experiments.lib.data.BraTS19 import Data
+from experiments.lib.models.MiNetCRModel import MiNetCR
+from experiments.lib.data.CRAll import Data
 import tensorflow as tf
 import itertools, os
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
-
-BASE_PATH = "results_MiNet/minet_d2_concat2_BN"
+BASE_PATH = "results_MiNet/delete/"
 messageTwitter = "minet_d2_concat2"
 
-# 12 -> ok
-# 13 -> ok
-# 14 -> ok
-# 15 -> ok
-# 16 -> memory error. 2506050 > 516096
-# 17 -> memory error. 2740366 > 516096
-# sbatch mem is 4096, priority is 1622
-# sbatch mem is 512, priority is 1620
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # Fixed configuration
 config = {}
-config["config.lr"] = 1e-8
+config["config.lr"] = 1e-5
 #config["config.weight_decay"] = 1e-4
 config["config.opt"] = tf.train.AdamOptimizer(learning_rate=config["config.lr"])
 #config["config.opt"] = tf.contrib.opt.AdamWOptimizer(weight_decay=config["weight_decay"], learning_rate=config["lr"])
 config["config.loss"] = "own"
-config["config.epochs"] = 100
+config["config.epochs"] = 2
 config["config.batch"] = 1
 config["config.initW"] = tf.keras.initializers.he_normal()
 config["config.initB"] = tf.constant_initializer(0)
 config["config.act"] = "relu"
-config["config.classes"] = 4
+config["config.classes"] = 2
 config["config.alpha_l2"] = 0.01 # Typical value
 config["config.early_stopping_c"] = 99
+#config["config.find_weights"] = "/home/miguelv/MiNet/results_MiNet/delete/growthrate_16/1/weights/w-15"
 config["config.find_weights"] = ""
-config["Model"] = MiNetBrats
+config["config.growth_rate"] = 16
+config["config.concat"] = 2
+config["Model"] = MiNetCR
 data = Data()
-data.split(folds=1, prop=[0.7, 0.2, 0.1])
+data.split(folds=1, prop=[0.8])
 config["data"] = data
 
 for _ in [1]:

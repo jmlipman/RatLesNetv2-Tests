@@ -11,7 +11,7 @@ def main(config, Model, data, base_path, _run):
     base_path = base_path + str(_run._id) + "/"
     config["base_path"] = base_path
 
-    data.split(folds=1, prop=[0.7, 0.2, 0.1])
+    #data.split(folds=1, prop=[0.8, 0.2, 0.1])
     model = Model(config)
     model.train(data)
-    model.test(data)
+    model.test(data, save=True)

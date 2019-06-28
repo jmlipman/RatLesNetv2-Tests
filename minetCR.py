@@ -31,7 +31,9 @@ config["config.find_weights"] = "/home/miguelv/MiNet/results_MiNet/delete/growth
 config["config.growth_rate"] = 16
 config["config.concat"] = 2
 config["Model"] = MiNetCR
-config["data"] = Data()
+data = Data()
+data.split(folds=1, prop=[0.7, 0.2, 0.1])
+config["data"] = data
 
 for _ in [1]:
 

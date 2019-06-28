@@ -43,9 +43,37 @@ def checkBatches(getBatch):
 
 
 
-run_tests = ["CR02NOV16_1fold", "CR02NOV16_5folds", "BraTS_1fold"]
-run_tests = ["CR02NOV16_1fold", "CR02NOV16_5folds"]
+run_tests = ["CRAll", "CR02NOV16_1fold", "CR02NOV16_5folds", "BraTS_1fold"]
+run_tests = ["CRAll"]
 
+if "CRAll" in run_tests:
+    print("Test: CRAll")
+    from experiments.lib.data.CRAll import Data
+    data = Data()
+    data.split([0.8, 0.2])
+    print("Train")
+    print("Expected number of samples: "+str(len(data.all_training_files[0])))
+    c, bs, sx, sy = checkBatches(data.getNextTrainingBatch)
+    assert c == "36"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+    assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
+
+    print("Validation")
+    print("Expected number of samples: "+str(len(data.all_validation_files[0])))
+    c, bs, sx, sy = checkBatches(data.getNextValidationBatch)
+    assert c == "12"
+    assert bs == "{1}"
+    assert sx == "{'in_volume': {(1, 18, 256, 256, 1)}}"
+    assert sy == "{'out_segmentation': {(1, 18, 256, 256, 2)}}"
+
+    print("Test")
+    print("Expected number of samples: "+str(len(data.all_test_files[0])))
+    c, bs, sx, sy = checkBatches(data.getNextTestBatch)
+    print(c)
+    print(bs)
+    print(sx)
+    print(sy)
 
 if "CR02NOV16_1fold" in run_tests:
     print("Test: CR02NOV16_1fold")

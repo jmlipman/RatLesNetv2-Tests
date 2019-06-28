@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Conv3D, MaxPooling3D
 from tensorflow.keras.regularizers import l2
 from experiments.lib.blocks.MiNetCRBlocks import *
 from experiments.lib.blocks.MainBlocks import *
-from experiments.lib.util import TB_Log, log
+from experiments.lib.util import TB_Log, log, dice_coef
 from .ModelBase import ModelBase
 from experiments.lib import memory_saving_gradients
 
@@ -121,3 +121,26 @@ class MiNetCR(ModelBase):
             return True
 
         return False
+
+    def measure(self, y_pred, y_true):
+        # For now, it is only a segmentation
+        # In the future, it can include the survival days
+
+        res = dice_coef(y_pred, y_true["out_segmentation"])
+        # Batch-size is always one
+        return res
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
