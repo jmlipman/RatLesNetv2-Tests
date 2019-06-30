@@ -138,8 +138,12 @@ class Data(BaseData):
                 X_train = np.moveaxis(X_train, 2, 0)
             X_train = np.expand_dims(X_train, axis=0)
 
-            if os.path.isfile(target+"scan"+self.ext+".nii.gz"):
-                Y_train = nib.load(target+"scan"+self.ext+".nii.gz").get_data()
+            if c == 1:
+                ext = "_lesion"
+            else:
+                ext = self.ext
+            if os.path.isfile(target+"scan"+ext+".nii.gz"):
+                Y_train = nib.load(target+"scan"+ext+".nii.gz").get_data()
                 Y_train = np.stack([1.0*(Y_train==j) for j in range(2)], axis=-1)
                 if self.depth_first:
                     Y_train = np.moveaxis(Y_train, 2, 0)

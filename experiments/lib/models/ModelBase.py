@@ -17,7 +17,9 @@ class ModelBase:
        of their configuration needs such as a training routine.
     """
     def __init__(self):
-        self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=1)
+        # For some reason (probably a TF bug) it raises me the following Exception
+        #Failed to get convolution algorithm. This is probably because cuDNN failed to initialize, so try looking to see if a warning log message was printed above.
+        #self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
 
         # Create a folder if it does not exist
         if not os.path.isdir(self.config["base_path"] +  "weights"):
@@ -27,7 +29,8 @@ class ModelBase:
         if self.config["find_weights"] != "":
             self.load_model()
         else:
-            self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+            #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+            self.sess = tf.Session(config=tf.ConfigProto())
             self.saver = tf.train.Saver()
 
         self.tb = TB_Log(self.config["base_path"], self.sess)
@@ -46,7 +49,8 @@ class ModelBase:
         # Load the graph. Unnecessary if I can create it again.
         self.saver = tf.train.import_meta_graph(self.config["find_weights"] + ".meta")
 
-        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+        #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+        self.sess = tf.Session(config=tf.ConfigProto())
         # Load the weights
         pathd = "/".join(self.config["find_weights"].split("/")[:-1])
         self.saver.restore(self.sess,tf.train.latest_checkpoint(pathd))
@@ -113,9 +117,9 @@ class ModelBase:
                 d_tmp = data.getNextTrainingBatch()
 
             # Validation (after each epoch)
+            log("Validation")
             d_tmp = data.getNextValidationBatch()
             val_loss = 0
-            log("Validation")
             while d_tmp != None and keep_training:
                 # Gets the inputs and outputs of the network
                 feeding = {}
@@ -244,6 +248,7 @@ class ModelBase:
                 results[ids[i]] = list(res[i])
                 if save: # Save predictions
                     np.save(self.config["base_path"] + "preds/pred_"+ids[i]+".npy", pred[i])
+                    #np.save(self.config["base_path"] + "preds/true_"+ids[i]+".npy", Y["out_segmentation"])
                     #pred_ = np.argmax(pred[i], axis=-1)
                     #nib.save(nib.Nifti1Image(pred_, np.eye(4)), self.config["base_path"] + "pred_"+ids[i]+".npy")
 
@@ -265,7 +270,6 @@ class ModelBase:
             Different measurements volume-wise. Right now, only dice coeff.
         """
         raise Exception("Implement your own measure function")
-        dice_coeff = self.measure_dice(preds, y_test)
-
-        return dice_coeff
+        #dice_coeff = self.measure_dice(preds, y_test)
+        #return dice_coeff
 

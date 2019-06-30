@@ -8,6 +8,12 @@ import random
 # Useful resource: https://gist.github.com/gyglim/1f8dfb1b5c82627ae3efcfbbadb9f514#file-tensorboard_logging-py-L41
 
 def dice_coef(y_pred, y_true):
+    """It calculates the Dice coefficient.
+
+       Args:
+        `y_pred`: batch containing the predictions. BDWHC.
+        `y_true`: batch containing the predictions. BDWHC.
+    """
     num_samples = y_pred.shape[0]
     num_classes = y_pred.shape[-1]
     results = np.zeros((num_samples, num_classes))

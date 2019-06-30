@@ -14,4 +14,4 @@ def main(config, Model, data, base_path, _run):
     #data.split(folds=1, prop=[0.8, 0.2, 0.1])
     model = Model(config)
     model.train(data)
-    model.test(data, save=True)
+    model.test(data)
