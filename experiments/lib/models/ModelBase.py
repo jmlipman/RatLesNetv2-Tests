@@ -17,9 +17,7 @@ class ModelBase:
        of their configuration needs such as a training routine.
     """
     def __init__(self):
-        # For some reason (probably a TF bug) it raises me the following Exception
-        #Failed to get convolution algorithm. This is probably because cuDNN failed to initialize, so try looking to see if a warning log message was printed above.
-        #self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
+        self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
 
         # Create a folder if it does not exist
         if not os.path.isdir(self.config["base_path"] +  "weights"):
@@ -29,8 +27,7 @@ class ModelBase:
         if self.config["find_weights"] != "":
             self.load_model()
         else:
-            #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
-            self.sess = tf.Session(config=tf.ConfigProto())
+            self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
             self.saver = tf.train.Saver()
 
         self.tb = TB_Log(self.config["base_path"], self.sess)
@@ -49,8 +46,7 @@ class ModelBase:
         # Load the graph. Unnecessary if I can create it again.
         self.saver = tf.train.import_meta_graph(self.config["find_weights"] + ".meta")
 
-        #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
-        self.sess = tf.Session(config=tf.ConfigProto())
+        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
         # Load the weights
         pathd = "/".join(self.config["find_weights"].split("/")[:-1])
         self.saver.restore(self.sess,tf.train.latest_checkpoint(pathd))
@@ -69,12 +65,14 @@ class ModelBase:
     def create_loss(self):
         """Creates the loss to be minimized.
         """
-        self.loss = self.config["loss"](y_true=self.y_true, y_pred=self.logits)
+        raise Exception("Implement your own loss function")
+        #self.loss = self.config["loss"](y_true=self.y_true, y_pred=self.logits)
 
     def create_train_step(self):
         """Optimizer to train the network.
         """
-        self.train_step = self.config["opt"].minimize(self.loss)
+        raise Exception("Implement your own train_step function")
+        #self.train_step = self.config["opt"].minimize(self.loss)
 
     def train(self, data):
         """This method will train the network given some data.
@@ -97,6 +95,12 @@ class ModelBase:
         losses = [] # Training and validation error
         keep_training = True # Flag to stop training when overfitting occurs.
 
+        # Calculate when and how much to decrease the learning rate
+        # This is used in the create_train_step, for piecewise_constant function
+        #self.config["wd_epochs"] = [(len(data.getFiles("training"))*self.config["wd_epochs"]*i/bs) for i in range(1, int(ep/self.config["wd_epochs"]))]
+        # This will always decrease by 0.1
+        #self.config["wd_rate"] = [1/(10**i) for i in range(len(self.config["wd_epochs"]+1))]
+
         log("Starting training")
         while e < ep and keep_training:
 
@@ -114,6 +118,8 @@ class ModelBase:
 
                 run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
                 _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
+                # This makes sense with _lr is a tensor (AdamWOptimizer)
+                #print(it, self.sess.run(self.config["opt"]._lr))
                 d_tmp = data.getNextTrainingBatch()
 
             # Validation (after each epoch)

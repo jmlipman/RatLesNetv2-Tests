@@ -29,11 +29,43 @@ class MiNetCR(ModelBase):
         super().__init__()
 
     #def create_train_step(self):
-    #    grads = memory_saving_gradients.gradients_speed(self.loss, tf.trainable_variables())
-    #    grads_and_vars = list(zip(grads, tf.trainable_variables()))
-    #    self.train_step = self.config["opt"].apply_gradients(grads_and_vars)
-    #    super().create_train_step()
 
+    def create_train_step(self):
+        """Optimizer to train the network.
+        """
+        #### Memory saving gradients
+        #grads = memory_saving_gradients.gradients_speed(self.loss, tf.trainable_variables())
+        #grads_and_vars = list(zip(grads, tf.trainable_variables()))
+        #self.train_step = self.config["opt"].apply_gradients(grads_and_vars)
+        #super().create_train_step()
+
+        #### Regular optimization
+        if self.config["weight_decay"] is None:
+            self.config["opt"] = tf.train.AdamOptimizer(learning_rate=self.config["lr"])
+            self.train_step = self.config["opt"].minimize(self.loss)
+
+        else:
+        #### Using learning rate decay and decoupled weight decay.
+            # Global step will increase in each iteration
+            global_step = tf.Variable(0, name="global_step", trainable=False)
+
+            # Decay scheduler
+            # Typically this accepts 3 params: global_step, vector1, vector2
+            # vector 1 indicates when the learning rate will decrease, and
+            # vector 2 indicates how much the learning rate will decrease.
+            # For instance: (global_step, [5, 10], [1e-0, 1e-1, 1e-2])
+            # There is no decay until the 5th step, then decay is 1e-1 until 10th
+            # and finally it's 1e-2 all the way until the end.
+            #decay = tf.train.piecewise_constant(global_step, [5, 10], [1e-0, 1e-1, 1e-2])
+            decay = tf.train.piecewise_constant(global_step, self.config["wd_epochs"], self.config["wd_rate"])
+
+            # Decay scheduler needs to be applied to wd and lr variables, because of the
+            # way it is implemented.
+            self.config["opt"] = tf.contrib.opt.AdamWOptimizer(
+                    weight_decay=self.config["weight_decay"]*decay,
+                    learning_rate=self.config["lr"]*decay)
+
+            self.train_step = self.config["opt"].minimize(self.loss, global_step=global_step)
 
     def create_loss(self):
         """Loss has 3 parts. Look at the formula.

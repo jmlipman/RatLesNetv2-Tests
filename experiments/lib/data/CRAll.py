@@ -51,7 +51,7 @@ class Data(BaseData):
         # Note: 10SEP2015 and 26MAY2016 have 17 slices.
         studies = ["03AUG2015", "07MAY2015", "02OCT2017", "03MAY2016", "08JAN2015",
                 "16NOV2017", "27JUN2017"]
-        studies = ["07MAY2015"]
+        #studies = ["07MAY2015"]
 
         # Counters for training, testing and validation
         self.counters = [0, 0, 0]
