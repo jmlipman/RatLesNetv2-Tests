@@ -34,6 +34,9 @@ class ModelBase:
         numParam = np.sum([np.prod(v.shape) for v in tf.trainable_variables()])
         print("Number of parameters: "+str(numParam))
 
+        if self.config["find_weights"] == "":
+            self.sess.run(tf.global_variables_initializer())
+
     def load_model(self):
         """This function will load an existing model (graph + weights).
            I could simply load the weights without loading a graph but this
@@ -83,17 +86,17 @@ class ModelBase:
            Args:
             `data`: data wrapper. It must follow some rules.
         """
-        if self.config["find_weights"] == "":
-            self.sess.run(tf.global_variables_initializer())
         ep = self.config["epochs"]
         bs = self.config["batch"]
-        early_stopping_c = 0
-        prev_val_loss = 99999999
+        #early_stopping_c = 0
+        prev_val_loss = [99999999]
         val_loss_text = ""
         e = 0 # Epoch counter
         it = 0 # Iteration counter
         losses = [] # Training and validation error
         keep_training = True # Flag to stop training when overfitting occurs.
+
+        self.lr_updated_counter = 0 # Times the that lr was updated
 
         # Calculate when and how much to decrease the learning rate
         # This is used in the create_train_step, for piecewise_constant function
@@ -137,9 +140,10 @@ class ModelBase:
                 val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
                 val_loss += val_loss_tmp * 1/len(data.getFiles("validation"))
                 d_tmp = data.getNextValidationBatch()
+            prev_val_loss.append(val_loss)
 
-            val_loss_text = " Val Loss: {}".format(val_loss)
-            self.tb.add_scalar(val_loss, "val_loss", e)
+            val_loss_text = " Val Loss: {}".format(prev_val_loss[-1])
+            self.tb.add_scalar(prev_val_loss[-1], "val_loss", e)
 
             # Routine to save the model
             if self.checkSaveModel(e, val_loss) or True:
@@ -152,16 +156,23 @@ class ModelBase:
                     f.write(json.dumps([save_pl, self.prediction.name, self.train_step.name, self.loss.name]))
 
             # Early stopping
-            if prev_val_loss < val_loss:
-                early_stopping_c += 1
-            else:
-                early_stopping_c = 0
-            prev_val_loss = val_loss
+            if self.earlyStoppingShouldStop(prev_val_loss, prev_losses_number=self.config["early_stopping_thr"]):
+                log("Stop training because of early stopping")
+                keep_training = False
+            #if prev_val_loss[-2] < prev_val_loss[-1]:
+            #    early_stopping_c += 1
+            #else:
+            #    early_stopping_c = 0
+            #if early_stopping_c >= self.config["early_stopping_thr"]:
+            #    keep_training = False
 
-            if early_stopping_c >= self.config["early_stopping_c"]:
+            # Decreasing Learning Rate when a plateau is found
+            self.decreaseLearningRateOnPlateau(prev_val_loss)
+            if self.lr_updated_counter > self.config["lr_updated_thr"]:
+                log("Stop training because I found another plateau")
                 keep_training = False
 
-            log("Epoch: {}. Loss: {}.".format(e, tr_loss) + val_loss_text)
+            log("Epoch: {}. LR: {}. Loss: {}.".format(e, self.sess.run(self.config["opt"]._lr), tr_loss) + val_loss_text)
             self.tb.add_scalar(tr_loss, "train_loss", e)
             e += 1
 
@@ -258,10 +269,11 @@ class ModelBase:
                     #pred_ = np.argmax(pred[i], axis=-1)
                     #nib.save(nib.Nifti1Image(pred_, np.eye(4)), self.config["base_path"] + "pred_"+ids[i]+".npy")
 
-            with open(self.config["base_path"] + "dice_results.json", "w") as f:
-                f.write(json.dumps(results))
-
             d_tmp = data.getNextTestBatch()
+
+        count = str(len([x for x in os.listdir(self.config["base_path"]) if "dice_results" in x]))
+        with open(self.config["base_path"] + "dice_results-"+count+".json", "w") as f:
+            f.write(json.dumps(results))
 
 
     def measure(self, preds, y_test):
@@ -278,4 +290,54 @@ class ModelBase:
         raise Exception("Implement your own measure function")
         #dice_coeff = self.measure_dice(preds, y_test)
         #return dice_coeff
+
+
+    def earlyStoppingShouldStop(self, val_losses, prev_losses_number=5):
+        """This function returns whether the training should stop because the
+           validation loss has increased for certain consecutive times.
+           
+           Args:
+            `val_losses`: list of validation losses.
+            `prev_losses_number`: The number of consecutive validation losses
+             that need to increase to decide to stop the training.
+        """
+        if len(val_losses) >= prev_losses_number+1:
+            decreases = [(val_losses[-i-1]-val_losses[-i]) < self.val_loss_reduce_lr_thr for i in range(prev_losses_number, 0, -1)]
+            return sum(decreases) == prev_losses_number
+
+
+    def decreaseLearningRateOnPlateau(self, val_losses, prev_losses_number=5, decrease_lr=1e-1, decrease_thr=1e-1):
+        """This function decreases the learning rate when it finds a plateau.
+           The method to find a plateau is to check the ratio
+           prev_val_loss/val_loss over a number of past iterations (threshold)
+           and if that ratio is lower than a threshold (prev_losses_number)
+           the learning rate is decreased.
+
+           Args:
+            `val_losses`: list of validation losses, including the current (last).
+            `prev_losses_number`: after this number of consecutive times finding
+             small rates, we consider we found a plateau and consequently
+             the learning rate is reduced. 
+            `decrease_lr`: How much the learning rate will be decreased each
+             time it finds a plateau. old_lr = lr*decrease_lr
+            `decrease_thr`: How much the ratio threshold needs to be decreased.
+             This is important because when the learning rate is decreased, 
+             the threshold needs to be decrease as well because the steps are
+             smaller.
+
+            Returns:
+             Whether learning rate was decreased.
+        """
+
+        if len(val_losses) >= prev_losses_number+1:
+            decreases = [abs(1-val_losses[-i-1]/val_losses[-i]) < self.val_loss_reduce_lr_thr for i in range(prev_losses_number, 0, -1)]
+            if sum(decreases) == prev_losses_number:
+                log("Decreasing Learning rate")
+                self.sess.run(self.lr_tensor.assign(self.lr_tensor * decrease_lr))
+                self.val_loss_reduce_lr_thr *= decrease_thr
+                self.val_loss_reduce_lr_counter = 0
+                self.lr_updated_counter += 1 # In ModelBase.py
+                return True
+
+        return False
 

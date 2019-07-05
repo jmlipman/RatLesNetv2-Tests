@@ -3,13 +3,13 @@ import numpy as np
 from .MainBlocks import BlockBase, CombineBlock, Depthwise_Conv3D
 from tensorflow.keras.layers import Conv3D, BatchNormalization, Conv3DTranspose
 
-class MiNet_DenseBlock1(BlockBase):
+class RatLesNet_DenseBlock(BlockBase):
 
     def __init__(self, conf, concat, growth_rate, dim_reduc=False):
-        """MiNet_DenseBlock1.
+        """RatLesNet_DenseBlock.
            Structure of the block: Conv
         """
-        self._name = "MiNet_DenseBlock1"
+        self._name = "RatLesNet_DenseBlock"
         self.conf = conf
         self.concat = concat
         self.growth_rate = growth_rate

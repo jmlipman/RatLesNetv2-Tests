@@ -4,13 +4,13 @@ import numpy as np
 import time
 from tensorflow.keras.layers import Conv3D, MaxPooling3D
 from tensorflow.keras.regularizers import l2
-from experiments.lib.blocks.MiNetCRBlocks import *
+from experiments.lib.blocks.RatLesNetBlocks import *
 from experiments.lib.blocks.MainBlocks import *
 from experiments.lib.util import TB_Log, log, dice_coef
 from .ModelBase import ModelBase
 from experiments.lib import memory_saving_gradients
 
-class MiNetCR(ModelBase):
+class RatLesNet(ModelBase):
     """Trunk model.
        Paper: 
        Required memory (nvidia-smi): 0., MB, MiB
@@ -28,7 +28,6 @@ class MiNetCR(ModelBase):
         self.create_train_step()
         super().__init__()
 
-    #def create_train_step(self):
 
     def create_train_step(self):
         """Optimizer to train the network.
@@ -38,10 +37,13 @@ class MiNetCR(ModelBase):
         #grads_and_vars = list(zip(grads, tf.trainable_variables()))
         #self.train_step = self.config["opt"].apply_gradients(grads_and_vars)
         #super().create_train_step()
+        self.val_loss_reduce_lr_counter = 0
+        self.val_loss_reduce_lr_thr = 1e-2
+        self.lr_tensor = tf.Variable(self.config["lr"], trainable=False, name="learning_rate")
 
         #### Regular optimization
         if self.config["weight_decay"] is None:
-            self.config["opt"] = tf.train.AdamOptimizer(learning_rate=self.config["lr"])
+            self.config["opt"] = tf.train.AdamOptimizer(learning_rate=self.lr_tensor)
             self.train_step = self.config["opt"].minimize(self.loss)
 
         else:
@@ -94,6 +96,7 @@ class MiNetCR(ModelBase):
         c1 = self.config["concat"]
         f1 = 12 # Initial filters
         g1 = self.config["growth_rate"] # Growth rate
+        skip = self.config["skip_connection"]
 
         # input = Conv 1x1 to expand
         out1 = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
@@ -101,10 +104,9 @@ class MiNetCR(ModelBase):
                 bias_initializer=self.config["initB"])(self.placeholders["in_volume"])
 
         # input = block1
-        #out2 = MiNet_DenseBlock1(self.config, concat=c1, growth_rate=g1)(out1)
-        out2 = MiNet_DenseBlock1(self.config, concat=c1, growth_rate=g1)(out1)
+        out2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out1)
         out3 = MaxPooling3D((2, 2, 2), (2, 2, 2), padding="SAME")(out2)
-        out4 = MiNet_DenseBlock1(self.config, concat=c1, growth_rate=g1)(out3)
+        out4 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out3)
         out5 = MaxPooling3D((2, 2, 2), (2, 2, 2), padding="SAME")(out4)
 
         #bottleneck = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
@@ -113,16 +115,16 @@ class MiNetCR(ModelBase):
                 bias_initializer=self.config["initB"])(out5)
 
         # Decoder
-        unpool1 = Unpooling3DBlock(out5, out4, factor=(2,2,2), skip_connection="concat")(bottleneck)
-        dec1 = MiNet_DenseBlock1(self.config, concat=c1, growth_rate=g1)(unpool1)
+        unpool1 = Unpooling3DBlock(out5, out4, factor=(2,2,2), skip_connection=skip)(bottleneck)
+        dec1 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool1)
 
         bottleneck2 = Conv3D(filters=f1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
                 padding="SAME", kernel_initializer=self.config["initW"],
                 bias_initializer=self.config["initB"])(dec1)
 
-        unpool2 = Unpooling3DBlock(out3, out2, factor=(2,2,2), skip_connection="concat")(bottleneck2)
+        unpool2 = Unpooling3DBlock(out3, out2, factor=(2,2,2), skip_connection=skip)(bottleneck2)
 
-        dec2 = MiNet_DenseBlock1(self.config, concat=c1, growth_rate=g1)(unpool2)
+        dec2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool2)
 
         # Classifier
         last = Conv3D(filters=self.config["classes"],
@@ -163,16 +165,4 @@ class MiNetCR(ModelBase):
         return res
 
         
-
-
-
-
-
-
-
-
-
-
-
-
 
