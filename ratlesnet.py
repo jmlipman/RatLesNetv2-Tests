@@ -62,25 +62,36 @@ params = [lrs, concats, skips, fsizes]
 all_configs = list(itertools.product(*params))
 ci = 0
 
+with open("run_on_cs3", "r") as f:
+    run_on_cs3 = f.read().split("\n")[:-1]
+
 for lr, concat, skip, fsize in all_configs:
+
     ci += 1
     # Name of the experiment and path
-    exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip) 
-    experiment_path = BASE_PATH + exp_name + "/"
-    ex.observers = [FileStorageObserver.create(experiment_path)]
-    config["base_path"] = experiment_path
-    
-    # Testing paramenters
-    config["config.lr"] = lr
-    config["config.growth_rate"] = fsize
-    config["config.concat"] = concat
-    config["config.skip_connection"] = skip
+    exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
-    ex.run(config_updates=config)
+    if exp_name in run_on_cs3:
+        print("Skipping: "+exp_name)
+        continue
 
     try:
+        print("Trying: "+exp_name)
+        experiment_path = BASE_PATH + exp_name + "/"
+        ex.observers = [FileStorageObserver.create(experiment_path)]
+        config["base_path"] = experiment_path
+        
+        # Testing paramenters
+        config["config.lr"] = lr
+        config["config.growth_rate"] = fsize
+        config["config.concat"] = concat
+        config["config.skip_connection"] = skip
+
+        ex.run(config_updates=config)
+
         show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
         print(show_text)
         #Twitter().tweet(messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs)))
     except:
-        pass
+        with open("errors", "a") as f:
+            f.write(exp_name + "\n")

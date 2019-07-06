@@ -17,7 +17,7 @@ class ModelBase:
        of their configuration needs such as a training routine.
     """
     def __init__(self):
-        self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
+        #self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.9)
 
         # Create a folder if it does not exist
         if not os.path.isdir(self.config["base_path"] +  "weights"):
@@ -27,7 +27,8 @@ class ModelBase:
         if self.config["find_weights"] != "":
             self.load_model()
         else:
-            self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+            #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+            self.sess = tf.Session(config=tf.ConfigProto())
             self.saver = tf.train.Saver()
 
         self.tb = TB_Log(self.config["base_path"], self.sess)
@@ -49,7 +50,8 @@ class ModelBase:
         # Load the graph. Unnecessary if I can create it again.
         self.saver = tf.train.import_meta_graph(self.config["find_weights"] + ".meta")
 
-        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+        #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+        self.sess = tf.Session(config=tf.ConfigProto())
         # Load the weights
         pathd = "/".join(self.config["find_weights"].split("/")[:-1])
         self.saver.restore(self.sess,tf.train.latest_checkpoint(pathd))
