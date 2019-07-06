@@ -5,8 +5,9 @@ from experiments.lib.models.RatLesNetModel import RatLesNet
 from experiments.lib.data.CRAll import Data
 import tensorflow as tf
 import itertools, os
+import time
 
-BASE_PATH = "results_RatLesNet_DELETE/"
+BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -14,7 +15,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 # Fixed configuration
 config = {}
 config["config.lr"] = 1e-4
-config["config.epochs"] = 3
+config["config.epochs"] = 1000
 config["config.batch"] = 1
 config["config.initW"] = tf.keras.initializers.he_normal()
 config["config.initB"] = tf.constant_initializer(0)
@@ -71,9 +72,7 @@ for lr, concat, skip, fsize in all_configs:
     # Name of the experiment and path
     exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
-    if exp_name != "lr0.0001_concat6_f12_skipsum":
-        continue
-    if exp_name in run_on_cs3:
+    if not exp_name in run_on_cs3:
         print("Skipping: "+exp_name)
         continue
 
@@ -93,7 +92,7 @@ for lr, concat, skip, fsize in all_configs:
 
         show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
         print(show_text)
-        #Twitter().tweet(messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs)))
     except:
         with open("errors", "a") as f:
             f.write(exp_name + "\n")
+Twitter().tweet("Done" + str(time.time()))
