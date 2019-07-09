@@ -79,7 +79,7 @@ for lr, concat, skip, fsize in all_configs:
     # Name of the experiment and path
     exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
-    if not exp_name in run_on_cs3:
+    if exp_name in run_on_cs3:
         print("Skipping: "+exp_name)
         continue
 
@@ -101,7 +101,10 @@ for lr, concat, skip, fsize in all_configs:
         print(show_text)
     except KeyboardInterrupt:
         raise
-    except:
-        with open("errors", "a") as f:
+    except tf.errors.ResourceExhaustedError:
+        with open("no_memory_errors", "a") as f:
             f.write(exp_name + "\n")
+    except:
+        raise
+
 Twitter().tweet("Done" + str(time.time()))

@@ -309,13 +309,13 @@ class ModelBase:
             decreases = [(val_losses[-i-1]-val_losses[-i]) < self.val_loss_reduce_lr_thr for i in range(prev_losses_number, 0, -1)]
             return sum(decreases) == prev_losses_number
 
-    def decreaseLearningRateWhenValLossTooBig(self, prev_val_loss, thr):
+    def decreaseLearningRateWhenValLossTooBig(self, prev_val_loss, thr, decrease_lr=1e-1):
         # If this is -1, do not decrease learning rate on plateau.
         if self.config["lr_updated_thr"] == -1:
             return False
 
-        if len(prev_val_loss) > 1:
-            if prev_val_loss[1]/np.min(prev_val_loss) > self.config["lr_valloss_ratio"]:
+        if len(prev_val_loss) > 30: # To make sure it won't decrease the lr too soon.
+            if prev_val_loss[-1]/np.min(prev_val_loss) > self.config["lr_valloss_ratio"]:
                 self.sess.run(self.lr_tensor.assign(self.lr_tensor * decrease_lr))
                 self.lr_updated_counter += 1 # In ModelBase.py
                 # Check I can do this after vacations.
