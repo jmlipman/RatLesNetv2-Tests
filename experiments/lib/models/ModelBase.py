@@ -350,12 +350,14 @@ class ModelBase:
         # If this is -1, do not decrease learning rate on plateau.
         if self.config["lr_updated_thr"] == -1:
             return False
-
+        
         # Note: This is probably a problem when I load a model and
         # I train it again until it decreases the lr because it won't
         # find self.lr_tensor and it will throw an Exception.
         if len(val_losses) >= prev_losses_number+1:
             decreases = [abs(1-val_losses[-i-1]/val_losses[-i]) < self.val_loss_reduce_lr_thr for i in range(prev_losses_number, 0, -1)]
+            print(decreases)
+            print(self.val_loss_reduce_lr_thr)
             if sum(decreases) == prev_losses_number:
                 self.sess.run(self.lr_tensor.assign(self.lr_tensor * decrease_lr))
                 self.val_loss_reduce_lr_thr *= decrease_thr

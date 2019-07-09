@@ -126,6 +126,10 @@ class Data(BaseData):
 
         # This if controls that the behavior is different when the container
         # used when loadInMemory is not empty.
+        # TODO:
+        # - Put in a single container all data loaded.
+        # - Read X, process Y, pass to the child class.
+        # - Create child class to get X,Y,ids and return everything processed.
         try:
             X_train = self.X_container[id_]["in_volume"]
             Y_train = self.Y_container[id_]["out_segmentation"]
