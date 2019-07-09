@@ -11,13 +11,9 @@ from .ModelBase import ModelBase
 from experiments.lib import memory_saving_gradients
 
 class RatLesNet(ModelBase):
-    """Trunk model.
-       Paper:
-       Required memory (nvidia-smi): 0., MB, MiB
-       Number of parameters: M ()
-
-       Notes:
-        * None.
+    """RatLesNet.
+       Paper: Our paper
+       Number of parameters: 0.37M
 
     """
 
@@ -70,10 +66,7 @@ class RatLesNet(ModelBase):
             self.train_step = self.config["opt"].minimize(self.loss, global_step=global_step)
 
     def create_loss(self):
-        """Loss has 3 parts. Look at the formula.
-           Part 1: L2 Regularization (last piece of the code)
-           Part 2: Weighted cross entropy among all classifiers.
-           Part 3: Regular cross entropy.
+        """Regular cross entropy loss function.
         """
         # I don't need to create a model if I will load it
 
@@ -157,6 +150,15 @@ class RatLesNet(ModelBase):
         return False
 
     def measure(self, y_pred, y_true):
+        """This function measures the segmentation performance.
+
+           Args:
+            `y_pred`: batch containing the predictions. BDWHC.
+            `y_true`: batch containing the predictions. BDWHC.
+
+           Returns:
+            Dice coefficient.
+        """
         # For now, it is only a segmentation
         # In the future, it can include the survival days
 

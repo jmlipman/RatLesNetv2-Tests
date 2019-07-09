@@ -7,12 +7,17 @@ import tensorflow as tf
 import itertools, os
 import time
 
+### TODO
+# - Decrease learning rate options should be modelable from here.
+# - Check "predict" method from ModelBase class.
+
+
 BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
-# Fixed configuration
+### Fixed configuration
 data = Data()
 data.split(folds=1, prop=[0.8])
 config = {}
@@ -26,7 +31,7 @@ config["config.initB"] = tf.constant_initializer(0)
 config["config.act"] = "relu"
 config["config.classes"] = 2
 
-# Model architecture
+### Model architecture
 config["config.growth_rate"] = 18
 config["config.concat"] = 2
 config["config.skip_connection"] = "concat" #sum, False
@@ -79,7 +84,7 @@ for lr, concat, skip, fsize in all_configs:
     # Name of the experiment and path
     exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
-    if not exp_name in run_on_cs3:
+    if exp_name in run_on_cs3:
         print("Skipping: "+exp_name)
         continue
 

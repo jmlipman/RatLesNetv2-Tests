@@ -217,7 +217,7 @@ class ModelBase:
             d_tmp = data.getNextTestBatch()
 
     def predictBatch(self, X):
-        """Predicts a single batch.
+        """Predicts an individual batch.
 
            Args:
             `X`: dictionary containing the input of the network.

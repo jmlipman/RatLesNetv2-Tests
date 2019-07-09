@@ -8,11 +8,14 @@ import random
 # Useful resource: https://gist.github.com/gyglim/1f8dfb1b5c82627ae3efcfbbadb9f514#file-tensorboard_logging-py-L41
 
 def dice_coef(y_pred, y_true):
-    """It calculates the Dice coefficient.
+    """This function calculates the Dice coefficient.
 
        Args:
         `y_pred`: batch containing the predictions. BDWHC.
         `y_true`: batch containing the predictions. BDWHC.
+
+       Returns:
+        Dice coefficient. BC (B: batch, C: classes)
     """
     num_samples = y_pred.shape[0]
     num_classes = y_pred.shape[-1]
@@ -41,6 +44,9 @@ def crossValidation(rows, folds, randomize=True):
             data is a list of "folds" elements
             data[0] list with training indices
             data[1] list with testing indices
+
+        Args:
+         rows:
     """    
 
     indices = [i for i in range(rows)]
