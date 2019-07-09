@@ -43,6 +43,10 @@ config["config.early_stopping_thr"] = 999
 # If this is -1, LR won't decrease.
 config["config.lr_updated_thr"] = 3
 
+### Decrease Learning Rate when Val Loss is too high
+# 1.1 -> If val loss is 10% larger than the minimum recorded, decrease lr.
+config["config.lr_valloss_ratio"] = 1.1
+
 ### Weight Decay
 config["config.weight_decay"] = None # None will use Adam
 # Every X epochs, it will decrease Y rate.
@@ -95,6 +99,8 @@ for lr, concat, skip, fsize in all_configs:
 
         show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
         print(show_text)
+    except KeyboardInterrupt:
+        raise
     except:
         with open("errors", "a") as f:
             f.write(exp_name + "\n")

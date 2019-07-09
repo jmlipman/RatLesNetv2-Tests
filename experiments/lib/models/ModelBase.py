@@ -170,8 +170,10 @@ class ModelBase:
 
             # Decreasing Learning Rate when a plateau is found
             self.decreaseLearningRateOnPlateau(prev_val_loss)
+
+            self.decreaseLearningRateWhenValLossTooBig(prev_val_loss, self.config["lr_valloss_ratio"])
             if self.config["lr_updated_thr"] != -1 and self.lr_updated_counter > self.config["lr_updated_thr"]:
-                log("Stop training because I found another plateau")
+                log("Stop training. I've updated the lr enough times.")
                 keep_training = False
 
             log("Epoch: {}. Loss: {}.".format(e, tr_loss) + val_loss_text)
@@ -307,6 +309,20 @@ class ModelBase:
             decreases = [(val_losses[-i-1]-val_losses[-i]) < self.val_loss_reduce_lr_thr for i in range(prev_losses_number, 0, -1)]
             return sum(decreases) == prev_losses_number
 
+    def decreaseLearningRateWhenValLossTooBig(self, prev_val_loss, thr):
+        # If this is -1, do not decrease learning rate on plateau.
+        if self.config["lr_updated_thr"] == -1:
+            return False
+
+        if len(prev_val_loss) > 1:
+            if prev_val_loss[1]/np.min(prev_val_loss) > self.config["lr_valloss_ratio"]:
+                self.sess.run(self.lr_tensor.assign(self.lr_tensor * decrease_lr))
+                self.lr_updated_counter += 1 # In ModelBase.py
+                # Check I can do this after vacations.
+                #log("Decreasing Learning rate to: "+str(self.sess.run(self.lr_tensor)))
+                log("Decreasing Learning rate")
+                return True
+        return False
 
     def decreaseLearningRateOnPlateau(self, val_losses, prev_losses_number=5, decrease_lr=1e-1, decrease_thr=1e-1):
         """This function decreases the learning rate when it finds a plateau.
@@ -343,7 +359,7 @@ class ModelBase:
             if sum(decreases) == prev_losses_number:
                 self.sess.run(self.lr_tensor.assign(self.lr_tensor * decrease_lr))
                 self.val_loss_reduce_lr_thr *= decrease_thr
-                self.val_loss_reduce_lr_counter = 0
+                self.val_loss_reduce_lr_counter = 0 # what was this.
                 self.lr_updated_counter += 1 # In ModelBase.py
                 # Check I can do this after vacations.
                 #log("Decreasing Learning rate to: "+str(self.sess.run(self.lr_tensor)))
