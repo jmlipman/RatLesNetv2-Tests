@@ -79,7 +79,7 @@ for lr, concat, skip, fsize in all_configs:
     # Name of the experiment and path
     exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
-    if exp_name in run_on_cs3:
+    if not exp_name in run_on_cs3:
         print("Skipping: "+exp_name)
         continue
 
