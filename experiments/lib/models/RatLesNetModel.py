@@ -12,7 +12,7 @@ from experiments.lib import memory_saving_gradients
 
 class RatLesNet(ModelBase):
     """Trunk model.
-       Paper: 
+       Paper:
        Required memory (nvidia-smi): 0., MB, MiB
        Number of parameters: M ()
 
@@ -90,7 +90,7 @@ class RatLesNet(ModelBase):
         self.placeholders = {}
         self.placeholders["in_volume"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 1])
         self.placeholders["out_segmentation"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 2])
-        
+
         #self.x_weights = tf.placeholder(tf.float32, [None, 18, 256, 256])
         self.outputs = [] # I will store all the outputs that need to be opt.
         c1 = self.config["concat"]
@@ -164,5 +164,5 @@ class RatLesNet(ModelBase):
         # Batch-size is always one
         return res
 
-        
+
 

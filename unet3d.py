@@ -1,13 +1,13 @@
 from sacred.observers import FileStorageObserver
 from experiments.RegularTrainingTest import ex
 from experiments.lib.util import Twitter
-from experiments.lib.models.RatLesNetModel import RatLesNet
+from experiments.lib.models.UNet3DModel import UNet3D
 from experiments.lib.data.CRAll import Data
 import tensorflow as tf
 import itertools, os
 import time
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "results_3DUNet_DELETE/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -17,9 +17,9 @@ data = Data()
 data.split(folds=1, prop=[0.8])
 config = {}
 config["data"] = data
-config["Model"] = RatLesNet
-config["config.lr"] = 1e-4
-config["config.epochs"] = 1000
+config["Model"] = UNet3D 
+config["config.lr"] = 1e-9
+config["config.epochs"] = 30
 config["config.batch"] = 1
 config["config.initW"] = tf.keras.initializers.he_normal()
 config["config.initB"] = tf.constant_initializer(0)
@@ -27,13 +27,11 @@ config["config.act"] = "relu"
 config["config.classes"] = 2
 
 # Model architecture
-config["config.growth_rate"] = 18
-config["config.concat"] = 2
-config["config.skip_connection"] = "concat" #sum, False
+config["config.momentum"] = 0.99
 
 ### Loading Weights
-#config["config.find_weights"] = "/home/miguelv/MiNet/results_MiNet/delete/growthrate_16/1/weights/w-15"
 config["config.find_weights"] = ""
+config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_3DUNet_DELETE/test/1/weights/w-11"
 
 ### Early stopping
 config["config.early_stopping_thr"] = 999
@@ -41,7 +39,7 @@ config["config.early_stopping_thr"] = 999
 ### Decrease Learning Rate On Plateau
 # After this number of times that the lr is updated, the training is stopped.
 # If this is -1, LR won't decrease.
-config["config.lr_updated_thr"] = 3
+config["config.lr_updated_thr"] = -1
 
 ### Weight Decay
 config["config.weight_decay"] = None # None will use Adam
@@ -57,45 +55,24 @@ config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epoch
 #config["config.loss"] = "own"
 #config["config.alpha_l2"] = 0.01 # Typical value
 
-lrs = [1e-4, 1e-5]
-concats = [1, 2, 3, 4, 5, 6]
-skips = [False, "sum", "concat"]
-fsizes = [3, 6, 12, 18, 22, 25]
 
-params = [lrs, concats, skips, fsizes]
-all_configs = list(itertools.product(*params))
-ci = 0
+for _ in [1]:
 
-with open("run_on_cs3", "r") as f:
-    run_on_cs3 = f.read().split("\n")[:-1]
-
-for lr, concat, skip, fsize in all_configs:
-
-    ci += 1
     # Name of the experiment and path
-    exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
+    #exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
+    exp_name = "test"
 
-    if not exp_name in run_on_cs3:
-        print("Skipping: "+exp_name)
-        continue
+    print("Trying: "+exp_name)
+    experiment_path = BASE_PATH + exp_name + "/"
+    ex.observers = [FileStorageObserver.create(experiment_path)]
+    config["base_path"] = experiment_path
+    
+    # Testing paramenters
+    # Empty for now.
 
-    try:
-        print("Trying: "+exp_name)
-        experiment_path = BASE_PATH + exp_name + "/"
-        ex.observers = [FileStorageObserver.create(experiment_path)]
-        config["base_path"] = experiment_path
-        
-        # Testing paramenters
-        config["config.lr"] = lr
-        config["config.growth_rate"] = fsize
-        config["config.concat"] = concat
-        config["config.skip_connection"] = skip
+    ex.run(config_updates=config)
 
-        ex.run(config_updates=config)
+    #show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
+    #print(show_text)
 
-        show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
-        print(show_text)
-    except:
-        with open("errors", "a") as f:
-            f.write(exp_name + "\n")
-Twitter().tweet("Done" + str(time.time()))
+#Twitter().tweet("Done" + str(time.time()))

@@ -170,11 +170,11 @@ class ModelBase:
 
             # Decreasing Learning Rate when a plateau is found
             self.decreaseLearningRateOnPlateau(prev_val_loss)
-            if self.lr_updated_counter > self.config["lr_updated_thr"]:
+            if self.config["lr_updated_thr"] != -1 and self.lr_updated_counter > self.config["lr_updated_thr"]:
                 log("Stop training because I found another plateau")
                 keep_training = False
 
-            log("Epoch: {}. LR: {}. Loss: {}.".format(e, self.sess.run(self.config["opt"]._lr), tr_loss) + val_loss_text)
+            log("Epoch: {}. Loss: {}.".format(e, tr_loss) + val_loss_text)
             self.tb.add_scalar(tr_loss, "train_loss", e)
             e += 1
 
@@ -331,14 +331,23 @@ class ModelBase:
              Whether learning rate was decreased.
         """
 
+        # If this is -1, do not decrease learning rate on plateau.
+        if self.config["lr_updated_thr"] == -1:
+            return False
+
+        # Note: This is probably a problem when I load a model and
+        # I train it again until it decreases the lr because it won't
+        # find self.lr_tensor and it will throw an Exception.
         if len(val_losses) >= prev_losses_number+1:
             decreases = [abs(1-val_losses[-i-1]/val_losses[-i]) < self.val_loss_reduce_lr_thr for i in range(prev_losses_number, 0, -1)]
             if sum(decreases) == prev_losses_number:
-                log("Decreasing Learning rate")
                 self.sess.run(self.lr_tensor.assign(self.lr_tensor * decrease_lr))
                 self.val_loss_reduce_lr_thr *= decrease_thr
                 self.val_loss_reduce_lr_counter = 0
                 self.lr_updated_counter += 1 # In ModelBase.py
+                # Check I can do this after vacations.
+                #log("Decreasing Learning rate to: "+str(self.sess.run(self.lr_tensor)))
+                log("Decreasing Learning rate")
                 return True
 
         return False
