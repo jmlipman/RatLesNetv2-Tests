@@ -28,10 +28,6 @@ class RatLesNet(ModelBase):
     def create_train_step(self):
         """Optimizer to train the network.
         """
-        #### Memory saving gradients
-        #grads = memory_saving_gradients.gradients_speed(self.loss, tf.trainable_variables())
-        #grads_and_vars = list(zip(grads, tf.trainable_variables()))
-        #self.train_step = self.config["opt"].apply_gradients(grads_and_vars)
         #super().create_train_step()
         self.val_loss_reduce_lr_counter = 0
         self.val_loss_reduce_lr_thr = 1e-2
@@ -39,8 +35,15 @@ class RatLesNet(ModelBase):
 
         #### Regular optimization
         if self.config["weight_decay"] is None:
+
             self.config["opt"] = tf.train.AdamOptimizer(learning_rate=self.lr_tensor)
-            self.train_step = self.config["opt"].minimize(self.loss)
+
+            #### Memory saving gradients
+            grads = memory_saving_gradients.gradients_speed(self.loss, tf.trainable_variables())
+            grads_and_vars = list(zip(grads, tf.trainable_variables()))
+            self.train_step = self.config["opt"].apply_gradients(grads_and_vars)
+
+            #self.train_step = self.config["opt"].minimize(self.loss)
 
         else:
         #### Using learning rate decay and decoupled weight decay.
