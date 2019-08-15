@@ -75,10 +75,8 @@ params = [lrs, concats, skips, fsizes]
 all_configs = list(itertools.product(*params))
 ci = 0
 
-#with open("run_on_cs3", "r") as f:
-#    run_on_cs3 = f.read().split("\n")[:-1]
-
-only_this = ["lr1e-05_concat6_f12_skipsum", "lr1e-05_concat6_f12_skipFalse", "lr0.0001_concat6_f12_skipsum"]
+with open("run_on_cs3", "r") as f:
+    run_on_cs3 = f.read().split("\n")[:-1]
 
 for lr, concat, skip, fsize in all_configs:
 
@@ -86,7 +84,7 @@ for lr, concat, skip, fsize in all_configs:
     # Name of the experiment and path
     exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
-    if not exp_name in only_this:
+    if not exp_name in run_on_cs3:
         print("Skipping: "+exp_name)
         continue
 
