@@ -106,20 +106,6 @@ class ModelBase:
         # This will always decrease by 0.1
         #self.config["wd_rate"] = [1/(10**i) for i in range(len(self.config["wd_epochs"]+1))]
 
-        #print(tf.global_variables())
-
-        # Track gradients here. After each sample is shown to the network.
-        target_grad = ["conv3d/kernel:0", "RatLesNet_DenseBlock_2/conv3d_4/kernel:0", "conv3d_11/kernel:0"]
-        target_grad = []
-        track_tensors = []
-        for var in target_grad:
-            for v in tf.global_variables():
-                if var == v.name:
-                    grads_and_vars = self.config["opt"].compute_gradients(self.prediction, [v])[0]
-                    track_tensors.append(grads_and_vars[0])
-        # End of tracking gradients.
-        #warming_up = np.linspace(0, 1e-4, 36*5)
-
         log("Starting training")
         while e < ep and keep_training:
 
@@ -133,16 +119,13 @@ class ModelBase:
                 for pl in d_tmp[1].keys():
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
-                #if it < len(warming_up):
-                #    self.sess.run(self.lr_tensor.assign(warming_up[it]))
+                it += 1
 
                 run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
                 _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
                 # This makes sense with _lr is a tensor (AdamWOptimizer)
                 #print(it, self.sess.run(self.config["opt"]._lr))
                 d_tmp = data.getNextTrainingBatch()
-
-                it += 1
 
             # Validation (after each epoch)
             log("Validation")
@@ -178,6 +161,12 @@ class ModelBase:
             if self.earlyStoppingShouldStop(prev_val_loss, prev_losses_number=self.config["early_stopping_thr"]):
                 log("Stop training because of early stopping")
                 keep_training = False
+            #if prev_val_loss[-2] < prev_val_loss[-1]:
+            #    early_stopping_c += 1
+            #else:
+            #    early_stopping_c = 0
+            #if early_stopping_c >= self.config["early_stopping_thr"]:
+            #    keep_training = False
 
             # Decreasing Learning Rate when a plateau is found
             self.decreaseLearningRateOnPlateau(prev_val_loss)
@@ -194,15 +183,6 @@ class ModelBase:
             # If we are getting NaNs, it's pointless to continue
             if np.isnan(tr_loss):
                 keep_training = False
-
-        # Recording tracked tensors
-        #t1_all = np.array(t1_all)
-        #t2_all = np.array(t2_all)
-        #t3_all = np.array(t3_all)
-
-        #self.tb.save_histogram(t1_all, name="conv3d")
-        #self.tb.save_histogram(t2_all, name="conv3d_4")
-        #self.tb.save_histogram(t3_all, name="conv3d_11")
 
 
     def predict(self, data, save=False):
@@ -252,7 +232,7 @@ class ModelBase:
             feeding[self.placeholders[pl]] = X[pl]
         pred = self.sess.run(self.prediction, feed_dict=feeding)
         return pred
-
+        
 
 
     def test(self, data, save=False):
@@ -319,7 +299,7 @@ class ModelBase:
     def earlyStoppingShouldStop(self, val_losses, prev_losses_number=5):
         """This function returns whether the training should stop because the
            validation loss has increased for certain consecutive times.
-
+           
            Args:
             `val_losses`: list of validation losses.
             `prev_losses_number`: The number of consecutive validation losses
@@ -355,11 +335,11 @@ class ModelBase:
             `val_losses`: list of validation losses, including the current (last).
             `prev_losses_number`: after this number of consecutive times finding
              small rates, we consider we found a plateau and consequently
-             the learning rate is reduced.
+             the learning rate is reduced. 
             `decrease_lr`: How much the learning rate will be decreased each
              time it finds a plateau. old_lr = lr*decrease_lr
             `decrease_thr`: How much the ratio threshold needs to be decreased.
-             This is important because when the learning rate is decreased,
+             This is important because when the learning rate is decreased, 
              the threshold needs to be decrease as well because the steps are
              smaller.
 
@@ -370,7 +350,7 @@ class ModelBase:
         # If this is -1, do not decrease learning rate on plateau.
         if self.config["lr_updated_thr"] == -1:
             return False
-
+        
         # Note: This is probably a problem when I load a model and
         # I train it again until it decreases the lr because it won't
         # find self.lr_tensor and it will throw an Exception.
@@ -389,3 +369,4 @@ class ModelBase:
                 return True
 
         return False
+

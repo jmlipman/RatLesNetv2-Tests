@@ -12,7 +12,7 @@ import time
 # - Check "predict" method from ModelBase class.
 
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "results_RatLesNet_Flip/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -71,33 +71,36 @@ config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epoch
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 
-lrs = [1e-4]
-concats = [6]
-skips = ["concat"]
-fsizes = [18]
-
-params = [lrs, concats, skips, fsizes]
-all_configs = list(itertools.product(*params))
+#params = [lrs, concats, skips, fsizes]
+#all_configs = list(itertools.product(*params))
+all_configs = [0]
 ci = 0
 
+#with open("run_on_cs3", "r") as f:
+#    run_on_cs3 = f.read().split("\n")[:-1]
 
-for lr, concat, skip, fsize in all_configs:
+#for lr, concat, skip, fsize in all_configs:
+for _ in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "test_del"
+    exp_name = "baseline"
+
+    #if not exp_name in run_on_cs3:
+    #    print("Skipping: "+exp_name)
+    #    continue
 
     try:
         print("Trying: "+exp_name)
         experiment_path = BASE_PATH + exp_name + "/"
         ex.observers = [FileStorageObserver.create(experiment_path)]
         config["base_path"] = experiment_path
-
+        
         # Testing paramenters
-        config["config.lr"] = lr
-        config["config.growth_rate"] = fsize
-        config["config.concat"] = concat
-        config["config.skip_connection"] = skip
+        #config["config.lr"] = lr
+        #config["config.growth_rate"] = fsize
+        #config["config.concat"] = concat
+        #config["config.skip_connection"] = skip
 
         ex.run(config_updates=config)
 
@@ -111,4 +114,4 @@ for lr, concat, skip, fsize in all_configs:
     except:
         raise
 
-#Twitter().tweet("Done" + str(time.time()))
+Twitter().tweet("Done" + str(time.time()))

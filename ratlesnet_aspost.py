@@ -2,7 +2,7 @@ from sacred.observers import FileStorageObserver
 from experiments.RegularTrainingTest import ex
 from experiments.lib.util import Twitter
 from experiments.lib.models.RatLesNetModel import RatLesNet
-from experiments.lib.data.CRAll import Data
+from experiments.lib.data.CRPost import Data
 import tensorflow as tf
 import itertools, os
 import time
@@ -12,14 +12,14 @@ import time
 # - Check "predict" method from ModelBase class.
 
 
-BASE_PATH = "results_RatLesNet/"
-messageTwitter = "ratlesnet_"
+BASE_PATH = "results_RatLesNet_aspost/"
+messageTwitter = "ratlesnetaspost_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 ### Fixed configuration
 data = Data()
-data.split(folds=1, prop=[0.8])
+data.split(folds=1)
 config = {}
 config["data"] = data
 config["Model"] = RatLesNet
@@ -66,33 +66,27 @@ config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epoch
 #config["config.loss"] = "own"
 #config["config.alpha_l2"] = 0.01 # Typical value
 
-#lrs = [1e-4, 1e-5]
-#concats = [1, 2, 3, 4, 5, 6]
-#skips = [False, "sum", "concat"]
-#fsizes = [3, 6, 12, 18, 22, 25]
-
-lrs = [1e-4]
-concats = [6]
+lrs = [1e-4, 1e-5]
+concats = [2, 3]
 skips = ["concat"]
-fsizes = [18]
+fsizes = [3, 6, 12, 18]
 
 params = [lrs, concats, skips, fsizes]
 all_configs = list(itertools.product(*params))
 ci = 0
 
-
 for lr, concat, skip, fsize in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "test_del"
+    exp_name = "lr" + str(lr) + "_concat" + str(concat) + "_f" + str(fsize) + "_skip" + str(skip)
 
     try:
         print("Trying: "+exp_name)
         experiment_path = BASE_PATH + exp_name + "/"
         ex.observers = [FileStorageObserver.create(experiment_path)]
         config["base_path"] = experiment_path
-
+        
         # Testing paramenters
         config["config.lr"] = lr
         config["config.growth_rate"] = fsize
@@ -111,4 +105,4 @@ for lr, concat, skip, fsize in all_configs:
     except:
         raise
 
-#Twitter().tweet("Done" + str(time.time()))
+Twitter().tweet("Done" + str(time.time()))

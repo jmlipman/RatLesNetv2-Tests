@@ -147,6 +147,7 @@ class Data(BaseData):
                 ext = self.ext
             if os.path.isfile(target+"scan"+ext+".nii.gz"):
                 Y_train = nib.load(target+"scan"+ext+".nii.gz").get_data()
+                #Y_train = np.expand_dims(Y_train, -1)
                 Y_train = np.stack([1.0*(Y_train==j) for j in range(2)], axis=-1)
                 if self.depth_first:
                     Y_train = np.moveaxis(Y_train, 2, 0)

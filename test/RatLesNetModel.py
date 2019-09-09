@@ -85,9 +85,6 @@ class RatLesNet(ModelBase):
             #        self.logits)
             #print(cross_entropy)
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
-
-            #lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * 0.005
-
             self.loss = tf.reduce_sum(cross_entropy)
 
 
@@ -141,7 +138,6 @@ class RatLesNet(ModelBase):
 
         self.logits = last
         self.prediction = tf.nn.softmax(self.logits)
-
 
     def checkSaveModel(self, epoch, val_loss):
         """This function will decide whether to save the current model or

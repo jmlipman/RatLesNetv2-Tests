@@ -46,6 +46,15 @@ def checkBatches(getBatch):
 run_tests = ["CRAll", "CR02NOV16_1fold", "CR02NOV16_5folds", "BraTS_1fold"]
 run_tests = ["CRAll"]
 
+if "CRPost" in run_tests:
+    print("Test: CRPost")
+    from experiments.lib.data.CRPost import Data
+    data = Data()
+    data.split(folds=1)
+    c, bs, sx, sy = checkBatches(data.getNextTrainingBatch)
+    c, bs, sx, sy = checkBatches(data.getNextValidationBatch)
+    c, bs, sx, sy = checkBatches(data.getNextTestBatch)
+
 if "CRAll" in run_tests:
     print("Test: CRAll")
     from experiments.lib.data.CRAll import Data

@@ -126,11 +126,16 @@ class ModelBase:
             # Training
             d_tmp = data.getNextTrainingBatch()
             while d_tmp != None and keep_training:
+                flipping = np.random.random()>5
                 # Gets the inputs and outputs of the network
                 feeding = {}
                 for pl in d_tmp[0].keys():
+                    if flipping:
+                        d_tmp[0][pl] = np.flip(d_tmp[0][pl], axis=2)
                     feeding[self.placeholders[pl]] = d_tmp[0][pl]
                 for pl in d_tmp[1].keys():
+                    if flipping:
+                        d_tmp[1][pl] = np.flip(d_tmp[1][pl], axis=2)
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
                 #if it < len(warming_up):
@@ -178,6 +183,12 @@ class ModelBase:
             if self.earlyStoppingShouldStop(prev_val_loss, prev_losses_number=self.config["early_stopping_thr"]):
                 log("Stop training because of early stopping")
                 keep_training = False
+            #if prev_val_loss[-2] < prev_val_loss[-1]:
+            #    early_stopping_c += 1
+            #else:
+            #    early_stopping_c = 0
+            #if early_stopping_c >= self.config["early_stopping_thr"]:
+            #    keep_training = False
 
             # Decreasing Learning Rate when a plateau is found
             self.decreaseLearningRateOnPlateau(prev_val_loss)
@@ -252,7 +263,7 @@ class ModelBase:
             feeding[self.placeholders[pl]] = X[pl]
         pred = self.sess.run(self.prediction, feed_dict=feeding)
         return pred
-
+        
 
 
     def test(self, data, save=False):
@@ -319,7 +330,7 @@ class ModelBase:
     def earlyStoppingShouldStop(self, val_losses, prev_losses_number=5):
         """This function returns whether the training should stop because the
            validation loss has increased for certain consecutive times.
-
+           
            Args:
             `val_losses`: list of validation losses.
             `prev_losses_number`: The number of consecutive validation losses
@@ -355,11 +366,11 @@ class ModelBase:
             `val_losses`: list of validation losses, including the current (last).
             `prev_losses_number`: after this number of consecutive times finding
              small rates, we consider we found a plateau and consequently
-             the learning rate is reduced.
+             the learning rate is reduced. 
             `decrease_lr`: How much the learning rate will be decreased each
              time it finds a plateau. old_lr = lr*decrease_lr
             `decrease_thr`: How much the ratio threshold needs to be decreased.
-             This is important because when the learning rate is decreased,
+             This is important because when the learning rate is decreased, 
              the threshold needs to be decrease as well because the steps are
              smaller.
 
@@ -370,7 +381,7 @@ class ModelBase:
         # If this is -1, do not decrease learning rate on plateau.
         if self.config["lr_updated_thr"] == -1:
             return False
-
+        
         # Note: This is probably a problem when I load a model and
         # I train it again until it decreases the lr because it won't
         # find self.lr_tensor and it will throw an Exception.
