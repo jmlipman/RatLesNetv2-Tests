@@ -39,8 +39,8 @@ config["config.concat"] = 2
 config["config.skip_connection"] = "concat" #sum, False
 
 ### Loading Weights
-config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/lr0.0001_concat3_f18_skipconcat/1/weights/w-261"
-#config["config.find_weights"] = ""
+#config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/lr0.0001_concat3_f18_skipconcat/1/weights/w-261"
+config["config.find_weights"] = ""
 
 ### Early stopping
 config["config.early_stopping_thr"] = 999
