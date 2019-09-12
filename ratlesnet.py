@@ -1,5 +1,7 @@
 from sacred.observers import FileStorageObserver
-from experiments.RegularTrainingTest import ex
+#from experiments.RegularTrainingTest import ex
+#from experiments.VoxelIndividualTest import ex
+from experiments.VoxelInfluenceTest import ex
 from experiments.lib.util import Twitter
 from experiments.lib.models.RatLesNetModel import RatLesNet
 from experiments.lib.data.CRAll import Data
@@ -12,7 +14,7 @@ import time
 # - Check "predict" method from ModelBase class.
 
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "res_del/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -37,8 +39,8 @@ config["config.concat"] = 2
 config["config.skip_connection"] = "concat" #sum, False
 
 ### Loading Weights
-#config["config.find_weights"] = "/home/miguelv/MiNet/results_MiNet/delete/growthrate_16/1/weights/w-15"
-config["config.find_weights"] = ""
+config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/lr0.0001_concat3_f18_skipconcat/1/weights/w-261"
+#config["config.find_weights"] = ""
 
 ### Early stopping
 config["config.early_stopping_thr"] = 999
@@ -72,7 +74,7 @@ config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epoch
 #fsizes = [3, 6, 12, 18, 22, 25]
 
 lrs = [1e-4]
-concats = [6]
+concats = [3]
 skips = ["concat"]
 fsizes = [18]
 
