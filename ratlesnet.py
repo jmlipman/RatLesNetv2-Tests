@@ -1,7 +1,7 @@
 from sacred.observers import FileStorageObserver
-#from experiments.RegularTrainingTest import ex
+from experiments.RegularTrainingTest import ex
 #from experiments.VoxelIndividualTest import ex
-from experiments.VoxelInfluenceTest import ex
+#from experiments.VoxelInfluenceTest import ex
 from experiments.lib.util import Twitter
 from experiments.lib.models.RatLesNetModel import RatLesNet
 from experiments.lib.data.CRAll import Data
@@ -14,7 +14,7 @@ import time
 # - Check "predict" method from ModelBase class.
 
 
-BASE_PATH = "res_del/"
+BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -87,7 +87,7 @@ for lr, concat, skip, fsize in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "test_del"
+    exp_name = "baseline"
 
     try:
         print("Trying: "+exp_name)
