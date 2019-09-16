@@ -30,6 +30,7 @@ class RatLesNet_DenseBlock(BlockBase):
                 #act = self.Activation(conv, self.conf["act"])
                 #bn = BatchNormalization()(conv)
                 # Add BN here.. and put the activation inside Conv3D.
+                conv = BatchNormalization()(conv)
                 outputs.append(conv)
                 x_input = CombineBlock(outputs).concat()
 

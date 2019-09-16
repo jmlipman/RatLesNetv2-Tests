@@ -2,7 +2,7 @@ import tensorflow as tf
 import random
 import numpy as np
 import time
-from tensorflow.keras.layers import Conv3D, MaxPooling3D
+from tensorflow.keras.layers import Conv3D, MaxPooling3D, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from experiments.lib.blocks.RatLesNetBlocks import *
 from experiments.lib.blocks.MainBlocks import *
@@ -81,14 +81,16 @@ class RatLesNet(ModelBase):
             # Cross_entropy -> same size as the images without the channels: 18, 256, 256
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
                     labels=self.placeholders["out_segmentation"])
-            #cross_entropy = tf.losses.softmax_cross_entropy(self.placeholders["out_segmentation"],
-            #        self.logits)
-            #print(cross_entropy)
+            self.loss = tf.reduce_mean(cross_entropy)
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
-            #lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * 0.005
+            # Dice loss
+            #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
+            #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
+            #self.loss += 1 - tf.reduce_sum(num / (denom + 1e-6))
 
-            self.loss = tf.reduce_sum(cross_entropy)
+            if self.config["L2"] != None:
+                self.loss += tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * self.config["L2"]
 
 
     def create_model(self):
@@ -107,8 +109,9 @@ class RatLesNet(ModelBase):
 
         # input = Conv 1x1 to expand
         out1 = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
-                padding="SAME", kernel_initializer=self.config["initW"],
+                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"]
                 bias_initializer=self.config["initB"])(self.placeholders["in_volume"])
+        out1 = BatchNormalization()(out1)
 
         # input = block1
         out2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out1)
@@ -118,16 +121,18 @@ class RatLesNet(ModelBase):
 
         #bottleneck = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
         bottleneck = Conv3D(filters=f1+g1*c1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
-                padding="SAME", kernel_initializer=self.config["initW"],
+                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"]
                 bias_initializer=self.config["initB"])(out5)
+        bottleneck = BatchNormalization()(bottleneck)
 
         # Decoder
         unpool1 = Unpooling3DBlock(out5, out4, factor=(2,2,2), skip_connection=skip)(bottleneck)
         dec1 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool1)
 
         bottleneck2 = Conv3D(filters=f1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
-                padding="SAME", kernel_initializer=self.config["initW"],
+                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"]
                 bias_initializer=self.config["initB"])(dec1)
+        bottleneck2 = BatchNormalization()(bottleneck2)
 
         unpool2 = Unpooling3DBlock(out3, out2, factor=(2,2,2), skip_connection=skip)(bottleneck2)
 

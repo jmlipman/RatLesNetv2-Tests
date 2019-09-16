@@ -35,8 +35,11 @@ config["config.classes"] = 2
 
 ### Model architecture
 config["config.growth_rate"] = 18
-config["config.concat"] = 2
+config["config.concat"] = 3
 config["config.skip_connection"] = "concat" #sum, False
+
+### L2 regularization
+config["config.L2"] = None
 
 ### Loading Weights
 #config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/lr0.0001_concat3_f18_skipconcat/1/weights/w-261"
@@ -73,21 +76,17 @@ config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epoch
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 
-lrs = [1e-4]
-concats = [3]
-skips = ["concat"]
-fsizes = [18]
-
-params = [lrs, concats, skips, fsizes]
-all_configs = list(itertools.product(*params))
+#params = [lrs, concats, skips, fsizes]
+#all_configs = list(itertools.product(*params))
 ci = 0
 
+all_configs = [0.001, 0.005, 0.01]
 
-for lr, concat, skip, fsize in all_configs:
+for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "baseline"
+    exp_name = "BN_crossentropy_mean"
 
     try:
         print("Trying: "+exp_name)
@@ -96,10 +95,11 @@ for lr, concat, skip, fsize in all_configs:
         config["base_path"] = experiment_path
 
         # Testing paramenters
-        config["config.lr"] = lr
-        config["config.growth_rate"] = fsize
-        config["config.concat"] = concat
-        config["config.skip_connection"] = skip
+        #config["config.lr"] = lr
+        #config["config.growth_rate"] = fsize
+        #config["config.concat"] = concat
+        #config["config.skip_connection"] = skip
+        #config["config.L2"] = l2
 
         ex.run(config_updates=config)
 
@@ -113,4 +113,4 @@ for lr, concat, skip, fsize in all_configs:
     except:
         raise
 
-#Twitter().tweet("Done" + str(time.time()))
+Twitter().tweet("Done " + str(time.time()))

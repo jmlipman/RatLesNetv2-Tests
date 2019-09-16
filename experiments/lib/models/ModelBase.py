@@ -17,7 +17,7 @@ class ModelBase:
        of their configuration needs such as a training routine.
     """
     def __init__(self):
-        self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
+        #self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.45)
 
         # Create a folder if it does not exist
         if not os.path.isdir(self.config["base_path"] +  "weights"):
@@ -27,8 +27,8 @@ class ModelBase:
         if self.config["find_weights"] != "":
             self.load_model()
         else:
-            self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
-            #self.sess = tf.Session(config=tf.ConfigProto())
+            #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
+            self.sess = tf.Session(config=tf.ConfigProto())
             self.saver = tf.train.Saver()
 
         self.tb = TB_Log(self.config["base_path"], self.sess)
