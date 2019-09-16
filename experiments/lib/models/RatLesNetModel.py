@@ -109,7 +109,7 @@ class RatLesNet(ModelBase):
 
         # input = Conv 1x1 to expand
         out1 = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
-                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"]
+                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
                 bias_initializer=self.config["initB"])(self.placeholders["in_volume"])
         out1 = BatchNormalization()(out1)
 
@@ -121,7 +121,7 @@ class RatLesNet(ModelBase):
 
         #bottleneck = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
         bottleneck = Conv3D(filters=f1+g1*c1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
-                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"]
+                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
                 bias_initializer=self.config["initB"])(out5)
         bottleneck = BatchNormalization()(bottleneck)
 
@@ -130,7 +130,7 @@ class RatLesNet(ModelBase):
         dec1 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool1)
 
         bottleneck2 = Conv3D(filters=f1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
-                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"]
+                padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
                 bias_initializer=self.config["initB"])(dec1)
         bottleneck2 = BatchNormalization()(bottleneck2)
 
