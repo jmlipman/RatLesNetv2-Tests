@@ -87,7 +87,7 @@ class RatLesNet(ModelBase):
             # Dice loss
             #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
             #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
-            #self.loss += 1 - tf.reduce_sum(num / (denom + 1e-6))
+            #self.loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
 
             if self.config["L2"] != None:
                 self.loss += tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * self.config["L2"]
@@ -111,7 +111,6 @@ class RatLesNet(ModelBase):
         out1 = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
                 padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
                 bias_initializer=self.config["initB"])(self.placeholders["in_volume"])
-        out1 = BatchNormalization()(out1)
 
         # input = block1
         out2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out1)
@@ -123,7 +122,6 @@ class RatLesNet(ModelBase):
         bottleneck = Conv3D(filters=f1+g1*c1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
                 padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
                 bias_initializer=self.config["initB"])(out5)
-        bottleneck = BatchNormalization()(bottleneck)
 
         # Decoder
         unpool1 = Unpooling3DBlock(out5, out4, factor=(2,2,2), skip_connection=skip)(bottleneck)
@@ -132,7 +130,6 @@ class RatLesNet(ModelBase):
         bottleneck2 = Conv3D(filters=f1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
                 padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
                 bias_initializer=self.config["initB"])(dec1)
-        bottleneck2 = BatchNormalization()(bottleneck2)
 
         unpool2 = Unpooling3DBlock(out3, out2, factor=(2,2,2), skip_connection=skip)(bottleneck2)
 

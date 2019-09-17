@@ -86,7 +86,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "BN_crossentropy_mean"
+    exp_name = "crossentropy_mean_bugfixed"
 
     try:
         print("Trying: "+exp_name)

@@ -125,6 +125,9 @@ class ModelBase:
 
             # Training
             d_tmp = data.getNextTrainingBatch()
+            if d_tmp == None: # This typically happens when the disc where the data is located is unmounted
+                raise Exception("No data! Check the script can access to the data.")
+
             while d_tmp != None and keep_training:
                 # Gets the inputs and outputs of the network
                 feeding = {}
