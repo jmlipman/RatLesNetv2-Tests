@@ -8,11 +8,15 @@ from experiments.lib.data.CRAll import Data
 import tensorflow as tf
 import itertools, os
 import time
+import argparse
 
 ### TODO
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
+results = parser.parse_args()
 
 BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
@@ -64,6 +68,9 @@ config["config.wd_epochs"] = 200
 config["config.wd_rate"] = 0.1 # Always 0.1
 config["config.wd_epochs"] = [int(len(data.getFiles("training"))*config["config.wd_epochs"]*i/config["config.batch"]) for i in range(1, int(config["config.epochs"]/config["config.wd_epochs"]+1))]
 config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
+
+# Other
+config["config.gpu_mem"] = float(results.gpu_mem)
 
 ### Legacy
 #config["config.opt"] = tf.train.AdamOptimizer(learning_rate=config["config.lr"])
