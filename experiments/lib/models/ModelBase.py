@@ -165,6 +165,7 @@ class ModelBase:
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
                 val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
+                print(d_tmp[2][0])
                 if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43":
                     name = d_tmp[2][0] + "_" + str(e)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
