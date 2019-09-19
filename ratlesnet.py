@@ -93,7 +93,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "CE_ShowLearningInVal"
+    exp_name = "differences_concat2"
 
     try:
         print("Trying: "+exp_name)
