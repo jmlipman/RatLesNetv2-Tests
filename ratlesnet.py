@@ -1,7 +1,7 @@
 from sacred.observers import FileStorageObserver
-from experiments.RegularTrainingTest import ex
+#from experiments.RegularTrainingTest import ex
 #from experiments.VoxelIndividualTest import ex
-#from experiments.VoxelInfluenceTest import ex
+from experiments.VoxelInfluenceTest import ex
 from experiments.lib.util import Twitter
 from experiments.lib.models.RatLesNetModel import RatLesNet
 from experiments.lib.data.CRAll import Data
@@ -46,8 +46,8 @@ config["config.skip_connection"] = "concat" #sum, False
 config["config.L2"] = None
 
 ### Loading Weights
-#config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/lr0.0001_concat3_f18_skipconcat/1/weights/w-261"
-config["config.find_weights"] = ""
+config["config.find_weights"] = "/home/miguelv/data/in/tmp_weights/w-230"
+#config["config.find_weights"] = ""
 
 ### Early stopping
 config["config.early_stopping_thr"] = 999
