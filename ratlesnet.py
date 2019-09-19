@@ -80,13 +80,13 @@ config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epoch
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [0.001, 0.005, 0.01]
+all_configs = [0]
 
 for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "crossentropy_mean_bugfixed"
+    exp_name = "CE_ShowLearningInVal"
 
     try:
         print("Trying: "+exp_name)

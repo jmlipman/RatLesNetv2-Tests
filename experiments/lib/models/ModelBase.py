@@ -120,6 +120,9 @@ class ModelBase:
         # End of tracking gradients.
         #warming_up = np.linspace(0, 1e-4, 36*5)
 
+        # Save evolution of training
+        os.makedirs(self.config["base_path"] + "val_evol")
+
         log("Starting training")
         while e < ep and keep_training:
 
@@ -160,6 +163,12 @@ class ModelBase:
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
                 val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
+                if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43":
+                    name = d_tmp[2][0] + "_" + str(e)
+                    s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
+                    s = np.argmax(s, axis=-1)
+                    nib.save(nib.Nifti1Image(s, np.eye(4)), self.config["base_path"] + "val_evol/" + name + ".nii.gz")
+
                 val_loss += val_loss_tmp * 1/len(data.getFiles("validation"))
                 d_tmp = data.getNextValidationBatch()
             prev_val_loss.append(val_loss)
