@@ -52,8 +52,13 @@ class ModelBase:
         # Load the graph. Unnecessary if I can create it again.
         self.saver = tf.train.import_meta_graph(self.config["find_weights"] + ".meta")
 
+        if self.config["gpu_mem"] == 1:
+            self.sess = tf.Session(config=tf.ConfigProto())
+        else:
+            self.gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=self.config["gpu_mem"])
+            self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
         #self.sess = tf.Session(config=tf.ConfigProto(gpu_options=self.gpu_options))
-        self.sess = tf.Session(config=tf.ConfigProto())
+        #self.sess = tf.Session(config=tf.ConfigProto())
         # Load the weights
         pathd = "/".join(self.config["find_weights"].split("/")[:-1])
         self.saver.restore(self.sess,tf.train.latest_checkpoint(pathd))
