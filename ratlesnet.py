@@ -46,7 +46,7 @@ config["config.skip_connection"] = "concat" #sum, False
 config["config.L2"] = None
 
 ### Loading Weights
-config["config.find_weights"] = "/home/miguelv/data/in/tmp_weights/w-574"
+config["config.find_weights"] = "/home/miguelv/data/in/tmp_weights2/w-83"
 #config["config.find_weights"] = ""
 
 ### Early stopping
@@ -93,7 +93,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "differences_concat1"
+    exp_name = "differences_concat4"
 
     try:
         print("Trying: "+exp_name)

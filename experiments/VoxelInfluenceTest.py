@@ -31,9 +31,9 @@ def main(config, Model, data, base_path, _run):
     #pred = model.predictBatch(X)
     #ref_value = pred[0, t3, t1, t2, 1]
 
-    for i in range(t1-15, t1+15):
+    for i in range(t1-30, t1+30):
         print(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+str(i)+"/"+str(167+30))
-        for j in range(t2-15, t2+15):
+        for j in range(t2-30, t2+30):
             for k in range(18):
                 vol = np.copy(orig_volume)
                 vol[0, k, i, j, 0] = mmin
