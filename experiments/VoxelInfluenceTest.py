@@ -31,7 +31,7 @@ def main(config, Model, data, base_path, _run):
     #pred = model.predictBatch(X)
     #ref_value = pred[0, t3, t1, t2, 1]
 
-    for i in range(t1-30, t1+30):
+    for i in range(t1-43, t1+43):
         print(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+str(i)+"/"+str(167+30))
         for j in range(t2-30, t2+30):
             for k in range(18):

@@ -84,6 +84,9 @@ class RatLesNet(ModelBase):
             self.loss = tf.reduce_mean(cross_entropy)
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
+            # Boundary loss
+            #self.loss = tf.reduce_sum(self.prediction * self.placeholders["out_segmentation"])
+
             # Dice loss
             #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
             #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])

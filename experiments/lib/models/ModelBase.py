@@ -151,6 +151,7 @@ class ModelBase:
 
                 run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
                 _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
+
                 # This makes sense with _lr is a tensor (AdamWOptimizer)
                 #print(it, self.sess.run(self.config["opt"]._lr))
                 d_tmp = data.getNextTrainingBatch()
@@ -170,7 +171,11 @@ class ModelBase:
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
                 val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
-                if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5":
+
+                # TODO: Check if I can do this "outside" in the experiment level.
+                # Saving progress.
+                #if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5": # For NMR CS3
+                if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
                     s = np.argmax(s, axis=-1)

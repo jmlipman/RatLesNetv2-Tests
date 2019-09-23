@@ -5,6 +5,7 @@ import os
 import random
 from scipy import ndimage
 from experiments.lib.data.BaseData import BaseData
+from scipy.ndimage import distance_transform_edt as dist
 
 
 class Data(BaseData):
@@ -162,6 +163,14 @@ class Data(BaseData):
         # The ID must be a list, so that I can later iterate over it
         return X_train, Y_train, [id_]
 
+    def onehot2prob(self, data):
+        distances = np.zeros_like(data)
+
+        for b in range(data.shape[0]):
+            for i in range(data.shape[-1]):
+                distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
+
+        return distances
 
     def getNextTrainingBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
