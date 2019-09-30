@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
 results = parser.parse_args()
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "delete/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -39,14 +39,16 @@ config["config.classes"] = 2
 
 ### Model architecture
 config["config.growth_rate"] = 18
-config["config.concat"] = 3
-config["config.skip_connection"] = "concat" #sum, False
+config["config.concat"] = 1
+config["config.skip_connection"] = "False" #sum, False
 
 ### L2 regularization
 config["config.L2"] = None
 
 ### Loading Weights
-config["config.find_weights"] = "/home/miguelv/data/in/tmp_weights2/w-73"
+#config["config.find_weights"] = "/home/miguelv/data/out/Lesion/RatLesNet/multipleConfigurations/lr0.0001_concat1_f18_skipFalse/1/weights/w-293"
+#config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/differences_concat1_skipFalse/1/weights/w-699"
+config["config.find_weights"] = "/home/miguelv/data/in/weights/w-293"
 #config["config.find_weights"] = ""
 
 ### Early stopping
@@ -93,7 +95,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "differences_concat5"
+    exp_name = "differences_concat1_skipFalse"
 
     try:
         print("Trying: "+exp_name)
@@ -120,4 +122,4 @@ for l2 in all_configs:
     except:
         raise
 
-Twitter().tweet("Done " + str(time.time()))
+#Twitter().tweet("Done " + str(time.time()))

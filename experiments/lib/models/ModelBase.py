@@ -278,6 +278,31 @@ class ModelBase:
         return pred
 
 
+    def outputFromOperation(self, X, op_name):
+        """Provides with the output of a specific operation.
+        
+           Args:
+            `X`: dictionary containing the input of the network.
+             The keys are the name of the placeholders where the data goes.
+             The values are the data.
+             `op_name`: name of the operation. You can find it by simply
+              tf.get_default_graph().get_operations()
+
+           Returns:
+            Output from the operation.
+
+        """
+        #for op in tf.get_default_graph().get_tensor_by_name(op_name+":0"):
+        #    if op_name == op.name:
+        #        target_op = op
+        target_op = tf.get_default_graph().get_tensor_by_name(op_name+":0")
+
+        feeding = {}
+        for pl in X.keys():
+            feeding[self.placeholders[pl]] = X[pl]
+        pred = self.sess.run(target_op, feed_dict=feeding)
+        return pred
+
 
     def test(self, data, save=False):
         """This function will generate predictions and measure the results.

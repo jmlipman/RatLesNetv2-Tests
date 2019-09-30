@@ -44,6 +44,47 @@ class RatLesNet_DenseBlock(BlockBase):
 
         return x_input
 
+class RatLesNet_DenseBlock_uno(BlockBase):
+
+    def __init__(self, conf, concat, growth_rate, dim_reduc=False):
+        """RatLesNet_DenseBlock.
+           Structure of the block: Conv
+        """
+        self._name = "RatLesNet_DenseBlock"
+        self.conf = conf
+        self.concat = concat
+        self.growth_rate = growth_rate
+        self.dim_reduc = dim_reduc
+
+    def __call__(self, input):
+        with tf.variable_scope(self.getBlockName()) as scope1:
+            feature_maps = int(input.shape[-1])
+
+            x_input = input
+            outputs = [x_input]
+
+            for i in range(self.concat):
+                conv = Conv3D(filters=self.growth_rate, kernel_size=(1,1,1),
+                        strides=(1,1,1), padding="SAME",
+                        kernel_initializer=self.conf["initW"],
+                        bias_initializer=self.conf["initB"], activation=self.conf["act"])(x_input)
+                #act = self.Activation(conv, self.conf["act"])
+                #bn = BatchNormalization()(conv)
+                # Add BN here.. and put the activation inside Conv3D.
+                #conv = BatchNormalization()(conv)
+                outputs.append(conv)
+                x_input = CombineBlock(outputs).concat()
+
+            # Not in use. Provides slightly worse results although it reduces
+            # the number of parameters quite a lot.
+            if self.dim_reduc:
+                x_input = Conv3D(filters=feature_maps, kernel_size=(1,1,1),
+                        strides=(1,1,1), padding="SAME",
+                        kernel_initializer=self.conf["initW"],
+                        bias_initializer=self.conf["initB"])(x_input)
+
+        return x_input
+
 class MiNet_DenseBlock_DW(BlockBase):
 
     def __init__(self, conf, concat, growth_rate, dim_reduc=False):
