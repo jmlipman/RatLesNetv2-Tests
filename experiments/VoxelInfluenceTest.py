@@ -43,7 +43,7 @@ def main(config, Model, data, base_path, _run):
         ind_ = np.unravel_index(ind, (50, 50, 6))
         #t1, t2, t3 = [165, 126, 7]
         # Interest area: 100-150, 100-150, 6-12
-        t1, t2, t3 = ind_[0][0]+100, ind_[1][0]+100, ind_[2][0]+6
+        t1, t2, t3 = ind_[0]+100, ind_[1]+100, ind_[2]+6
 
         print(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+str(ind))
         for i in range(t1-firstRange[0], t1+firstRange[1]):
