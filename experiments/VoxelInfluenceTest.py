@@ -47,8 +47,8 @@ def main(config, Model, data, base_path, _run):
                 X = {"in_volume": vol}
 
                 
-                #pred = model.predictBatch(X)
-                pred = model.outputFromOperation(X, "max_pooling3d/MaxPool3D")
+                pred = model.predictBatch(X)
+                #pred = model.outputFromOperation(X, "max_pooling3d/MaxPool3D")
                 #pred = model.outputFromOperation(X, "RatLesNet_DenseBlock_1/CombineBlock_Concat_1/concat")
                 diff = 0
                 for c in range(pred.shape[-1]):
