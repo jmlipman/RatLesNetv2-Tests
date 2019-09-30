@@ -72,7 +72,7 @@ def main(config, Model, data, base_path, _run):
                     #print(i, j, k, diff)
 
         #np.save(base_path+"differences.npy", res)
-        wheres = np.where(d!=0)
+        wheres = np.where(res!=0)
         if len(wheres) > 0:
             mmax0, mmin0 = max(wheres[0]), min(wheres[0])
             mmax1, mmin1 = max(wheres[1]), min(wheres[1])
