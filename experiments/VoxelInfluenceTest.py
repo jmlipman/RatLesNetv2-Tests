@@ -80,7 +80,7 @@ def main(config, Model, data, base_path, _run):
         else:
             mmax0, mmin0, mmax1, mmin1, mmax2, mmin2 = 0, 0, 0, 0, 0, 0
 
-        line = ",".join([ind, t1, t2, t3, mmax0, mmin0, mmax1, mmin1, mmax2, mmin2])
+        line = ",".join([str(_) for _ in [ind, t1, t2, t3, mmax0, mmin0, mmax1, mmin1, mmax2, mmin2]])
         with open(base_path+"affected.csv", "a") as f:
             f.write(line + "\n")
 
