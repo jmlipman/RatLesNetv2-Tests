@@ -10,6 +10,9 @@ ex = Experiment("VoxelInfluenceTest")
 @ex.main
 def main(config, Model, data, base_path, _run):
 
+    # From 0 to 14
+    myrun = 0
+
     base_path = base_path + str(_run._id) + "/"
     config["base_path"] = base_path
 
@@ -17,9 +20,7 @@ def main(config, Model, data, base_path, _run):
     #orig_volume = np.random.random((1, 18, 256, 256, 1))
     path_vol = "/home/miguelv/data/in/CR_DATA/02OCT2017/24h/11/scan.nii.gz"
     #path_vol = "/media/miguelv/HD1/CR_DATA/02OCT2017/24h/11/scan.nii.gz"
-    t1, t2, t3 = [165, 126, 7]
-    #t1, t2, t3 = [64, 64, 7]
-    #t1, t2, t3 = [32, 32, 3]
+
     orig_volume = nib.load(path_vol).get_data()
     orig_volume = np.expand_dims(np.moveaxis(orig_volume, 2, 0), 0)
     orig_volume = np.concatenate([orig_volume, orig_volume], axis=0)
@@ -34,36 +35,54 @@ def main(config, Model, data, base_path, _run):
     #pred = model.predictBatch(X)
     #ref_value = pred[0, t3, t1, t2, 1]
 
-    firstRange = [5, 5]
-    secondRange = [5, 5]
+    firstRange = [10, 10]
+    secondRange = [10, 10]
 
-    for i in range(t1-firstRange[0], t1+firstRange[1]):
-        print(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+str(i)+"/"+str(t1+firstRange[1]))
-        for j in range(t2-secondRange[0], t2+secondRange[1]):
-            for k in range(18):
-                vol = np.copy(orig_volume)
-                vol[0, k, i, j, 0] = mmin
-                vol[1, k, i, j, 0] = mmax
-                X = {"in_volume": vol}
+    for ind in range(myrun*1000, (myrun+1)*1000):
+        # TODO
+        ind_ = np.unravel_index(ind, (50, 50, 6))
+        #t1, t2, t3 = [165, 126, 7]
+        # Interest area: 100-150, 100-150, 6-12
+        t1, t2, t3 = ind_[0][0]+100, ind_[1][0]+100, ind_[2][0]+6
 
-                
-                pred = model.predictBatch(X)
-                #pred = model.outputFromOperation(X, "max_pooling3d/MaxPool3D")
-                #pred = model.outputFromOperation(X, "RatLesNet_DenseBlock_1/CombineBlock_Concat_1/concat")
-                diff = 0
-                for c in range(pred.shape[-1]):
-                    tmp_diff = np.abs(pred[0, t3, t1, t2, c] - pred[1, t3, t1, t2, c])
-                    if tmp_diff > diff:
-                        diff = tmp_diff
+        print(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+str(ind))
+        for i in range(t1-firstRange[0], t1+firstRange[1]):
+            #print(datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+str(i)+"/"+str(t1+firstRange[1]))
+            for j in range(t2-secondRange[0], t2+secondRange[1]):
+                for k in range(18):
+                    vol = np.copy(orig_volume)
+                    vol[0, k, i, j, 0] = mmin
+                    vol[1, k, i, j, 0] = mmax
+                    X = {"in_volume": vol}
 
-                #pred = np.moveaxis(np.reshape(pred, (18, 256, 256, 2)), 0, 2)
-                #if diff != 0:
-                #    print(i, j, k, diff)
-                res[i, j, k] = diff
-                #print(i, j, k, diff)
+                    
+                    pred = model.predictBatch(X)
+                    #pred = model.outputFromOperation(X, "max_pooling3d/MaxPool3D")
+                    #pred = model.outputFromOperation(X, "RatLesNet_DenseBlock_1/CombineBlock_Concat_1/concat")
+                    diff = 0
+                    for c in range(pred.shape[-1]):
+                        tmp_diff = np.abs(pred[0, t3, t1, t2, c] - pred[1, t3, t1, t2, c])
+                        if tmp_diff > diff:
+                            diff = tmp_diff
 
-    #nib.save(nib.Nifti1Image(res, np.eye(4)), base_path+"asd.nii.gz")
-    np.save(base_path+"differences.npy", res)
+                    #pred = np.moveaxis(np.reshape(pred, (18, 256, 256, 2)), 0, 2)
+                    #if diff != 0:
+                    #    print(i, j, k, diff)
+                    res[i, j, k] = diff
+                    #print(i, j, k, diff)
+
+        #np.save(base_path+"differences.npy", res)
+        wheres = np.where(d!=0)
+        if len(wheres) > 0:
+            mmax0, mmin0 = max(wheres[0]), min(wheres[0])
+            mmax1, mmin1 = max(wheres[1]), min(wheres[1])
+            mmax2, mmin2 = max(wheres[2]), min(wheres[2])
+        else:
+            mmax0, mmin0, mmax1, mmin1, mmax2, mmin2 = 0, 0, 0, 0, 0, 0
+
+        line = ",".join([ind, t1, t2, t3, mmax0, mmin0, mmax1, mmin1, mmax2, mmin2])
+        with open(base_path+"affected.csv", "a") as f:
+            f.write(line + "\n")
 
 
 #### Some notes
