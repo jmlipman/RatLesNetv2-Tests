@@ -38,7 +38,7 @@ def main(config, Model, data, base_path, _run):
     firstRange = [10, 10]
     secondRange = [10, 10]
 
-    for ind in range(15000):
+    for ind in range(10000, 15000):
         ind_ = np.unravel_index(ind, (50, 50, 6))
         #t1, t2, t3 = [165, 126, 7]
         # Interest area: 100-150, 100-150, 6-12
