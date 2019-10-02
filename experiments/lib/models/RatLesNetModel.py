@@ -79,13 +79,13 @@ class RatLesNet(ModelBase):
 
             # Regular cross entropy between the final output and the labels
             # Cross_entropy -> same size as the images without the channels: 18, 256, 256
-            #cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
-            #        labels=self.placeholders["out_segmentation"])
-            #self.loss = tf.reduce_mean(cross_entropy)
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
+                    labels=self.placeholders["out_segmentation"])
+            self.loss = tf.reduce_mean(cross_entropy)
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
             # Boundary loss
-            self.loss = tf.reduce_mean(self.prediction * self.placeholders["out_segmentation"])
+            #self.loss = tf.reduce_mean(self.prediction * self.placeholders["out_segmentation"])
 
             # Dice loss
             #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
@@ -116,9 +116,9 @@ class RatLesNet(ModelBase):
                 bias_initializer=self.config["initB"])(self.placeholders["in_volume"])
 
         # input = block1
-        out2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out1)
+        out2 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(out1)
         out3 = MaxPooling3D((2, 2, 2), (2, 2, 2), padding="SAME")(out2)
-        out4 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out3)
+        out4 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(out3)
         out5 = MaxPooling3D((2, 2, 2), (2, 2, 2), padding="SAME")(out4)
 
         #bottleneck = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
@@ -128,7 +128,7 @@ class RatLesNet(ModelBase):
 
         # Decoder
         unpool1 = Unpooling3DBlock(out5, out4, factor=(2,2,2), skip_connection=skip)(bottleneck)
-        dec1 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool1)
+        dec1 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(unpool1)
 
         bottleneck2 = Conv3D(filters=f1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
                 padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
@@ -136,7 +136,7 @@ class RatLesNet(ModelBase):
 
         unpool2 = Unpooling3DBlock(out3, out2, factor=(2,2,2), skip_connection=skip)(bottleneck2)
 
-        dec2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool2)
+        dec2 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(unpool2)
 
         # Classifier
         last = Conv3D(filters=self.config["classes"],

@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
 results = parser.parse_args()
 
-BASE_PATH = "delete/"
+BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -29,8 +29,8 @@ data.split(folds=1, prop=[0.8])
 config = {}
 config["data"] = data
 config["Model"] = RatLesNet
-config["config.lr"] = 1e-3
-config["config.epochs"] = 10 # Originally 700
+config["config.lr"] = 1e-4
+config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
 config["config.initW"] = tf.keras.initializers.he_normal()
 config["config.initB"] = tf.constant_initializer(0)
@@ -95,7 +95,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "boundaryloss_w3"
+    exp_name = "exp1_133_exceptlast"
 
     try:
         print("Trying: "+exp_name)

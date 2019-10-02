@@ -184,8 +184,8 @@ class Data(BaseData):
             return None
         X_train, Y_train, target = d_tmp
         X = {"in_volume": X_train}
-        Y = {"out_segmentation": self.onehot2prob(Y_train)}
-        #Y = {"out_segmentation": Y_train}
+        #Y = {"out_segmentation": self.onehot2prob(Y_train)}
+        Y = {"out_segmentation": Y_train}
         return X, Y, target
 
 
@@ -206,7 +206,7 @@ class Data(BaseData):
             return None
         X_val, Y_val, target = d_tmp
         X = {"in_volume": X_val}
-        Y = {"out_segmentation": self.onehot2prob(Y_val)}
-        #Y = {"out_segmentation": Y_val}
+        #Y = {"out_segmentation": self.onehot2prob(Y_val)}
+        Y = {"out_segmentation": Y_val}
         return X, Y, target
 
