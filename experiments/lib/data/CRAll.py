@@ -168,9 +168,12 @@ class Data(BaseData):
 
         for b in range(data.shape[0]):
             for i in range(data.shape[-1]):
-                distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
+                posmask = data[b,:,:,:,i].astype(bool)
+                negmask = ~posmask
+                #distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
+                distances[b,:,:,:,i] = dist(negmask) * negmask - (dist(posmask) - 1) * posmask
 
-        return distances
+        return np.abs(distances)
 
     def getNextTrainingBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
@@ -181,7 +184,8 @@ class Data(BaseData):
             return None
         X_train, Y_train, target = d_tmp
         X = {"in_volume": X_train}
-        Y = {"out_segmentation": Y_train}
+        Y = {"out_segmentation": self.onehot2prob(Y_train)}
+        #Y = {"out_segmentation": Y_train}
         return X, Y, target
 
 
@@ -192,7 +196,7 @@ class Data(BaseData):
             return None
         X_test, Y_test, target = d_tmp
         X = {"in_volume": X_test}
-        Y = {"out_segmentation": Y_test}
+        Y = {"out_segmentation": Y_test} # When using boundary loss, I don't need onehot2prob here.
         return X, Y, target
 
     def getNextValidationBatch(self):
@@ -202,6 +206,7 @@ class Data(BaseData):
             return None
         X_val, Y_val, target = d_tmp
         X = {"in_volume": X_val}
-        Y = {"out_segmentation": Y_val}
+        Y = {"out_segmentation": self.onehot2prob(Y_val)}
+        #Y = {"out_segmentation": Y_val}
         return X, Y, target
 

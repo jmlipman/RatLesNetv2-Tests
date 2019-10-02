@@ -117,13 +117,13 @@ class ModelBase:
 
         # Track gradients here. After each sample is shown to the network.
         target_grad = ["conv3d/kernel:0", "RatLesNet_DenseBlock_2/conv3d_4/kernel:0", "conv3d_11/kernel:0"]
-        target_grad = []
-        track_tensors = []
-        for var in target_grad:
+        if len(target_grad) > 0:
             for v in tf.global_variables():
-                if var == v.name:
+                if v.name in target_grad:
                     grads_and_vars = self.config["opt"].compute_gradients(self.prediction, [v])[0]
-                    track_tensors.append(grads_and_vars[0])
+                    tf.summary.histogram(v.name+"_grad", grads_and_vars[0])
+            summaries = tf.summary.merge_all()
+
         # End of tracking gradients.
         #warming_up = np.linspace(0, 1e-4, 36*5)
 
@@ -138,6 +138,7 @@ class ModelBase:
             if d_tmp == None: # This typically happens when the disc where the data is located is unmounted
                 raise Exception("No data! Check the script can access to the data.")
 
+            tr_loss = 0
             while d_tmp != None and keep_training:
                 # Gets the inputs and outputs of the network
                 feeding = {}
@@ -150,8 +151,13 @@ class ModelBase:
                 #    self.sess.run(self.lr_tensor.assign(warming_up[it]))
 
                 run_options = tf.RunOptions(report_tensor_allocations_upon_oom = True)
-                _, tr_loss = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
+                _, tr_loss_tmp = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
+                #a1, a2 = self.sess.run([self.prediction, self.placeholders["out_segmentation"]], feed_dict=feeding, options=run_options)
 
+                summ = self.sess.run(summaries, feed_dict=feeding, options=run_options)
+                self.tb.writer.add_summary(summ, it)
+
+                tr_loss += tr_loss_tmp * 1/len(data.getFiles("training"))
                 # This makes sense with _lr is a tensor (AdamWOptimizer)
                 #print(it, self.sess.run(self.config["opt"]._lr))
                 d_tmp = data.getNextTrainingBatch()
@@ -171,6 +177,7 @@ class ModelBase:
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
                 val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
+                #val_loss_tmp = self.sess.run(self.loss, feed_dict=feeding)
 
                 # TODO: Check if I can do this "outside" in the experiment level.
                 # Saving progress.
@@ -178,6 +185,7 @@ class ModelBase:
                 if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
+                    np.save(self.config["base_path"] + "val_evol/" + name, s)
                     s = np.argmax(s, axis=-1)
                     nib.save(nib.Nifti1Image(s, np.eye(4)), self.config["base_path"] + "val_evol/" + name + ".nii.gz")
 
@@ -189,7 +197,7 @@ class ModelBase:
             self.tb.add_scalar(prev_val_loss[-1], "val_loss", e)
 
             # Routine to save the model
-            if self.checkSaveModel(e, val_loss) or True:
+            if self.checkSaveModel(e, val_loss):
                 self.saver.save(self.sess, self.config["base_path"] + "weights/w-"+str(e))
                 # I also save the name of the tensors of the placeholders and pred
                 with open(self.config["base_path"] + "weights/tensors", "w") as f:
@@ -218,15 +226,6 @@ class ModelBase:
             # If we are getting NaNs, it's pointless to continue
             if np.isnan(tr_loss):
                 keep_training = False
-
-        # Recording tracked tensors
-        #t1_all = np.array(t1_all)
-        #t2_all = np.array(t2_all)
-        #t3_all = np.array(t3_all)
-
-        #self.tb.save_histogram(t1_all, name="conv3d")
-        #self.tb.save_histogram(t2_all, name="conv3d_4")
-        #self.tb.save_histogram(t3_all, name="conv3d_11")
 
 
     def predict(self, data, save=False):

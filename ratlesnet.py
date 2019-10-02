@@ -1,7 +1,7 @@
 from sacred.observers import FileStorageObserver
-#from experiments.RegularTrainingTest import ex
+from experiments.RegularTrainingTest import ex
 #from experiments.VoxelIndividualTest import ex
-from experiments.VoxelInfluenceTest import ex
+#from experiments.VoxelInfluenceTest import ex
 from experiments.lib.util import Twitter
 from experiments.lib.models.RatLesNetModel import RatLesNet
 from experiments.lib.data.CRAll import Data
@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
 results = parser.parse_args()
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "delete/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -29,8 +29,8 @@ data.split(folds=1, prop=[0.8])
 config = {}
 config["data"] = data
 config["Model"] = RatLesNet
-config["config.lr"] = 1e-4
-config["config.epochs"] = 700
+config["config.lr"] = 1e-3
+config["config.epochs"] = 10 # Originally 700
 config["config.batch"] = 1
 config["config.initW"] = tf.keras.initializers.he_normal()
 config["config.initB"] = tf.constant_initializer(0)
@@ -39,8 +39,8 @@ config["config.classes"] = 2
 
 ### Model architecture
 config["config.growth_rate"] = 18
-config["config.concat"] = 1
-config["config.skip_connection"] = "False" #sum, False
+config["config.concat"] = 3
+config["config.skip_connection"] = "concat" #sum, False
 
 ### L2 regularization
 config["config.L2"] = None
@@ -48,8 +48,8 @@ config["config.L2"] = None
 ### Loading Weights
 #config["config.find_weights"] = "/home/miguelv/data/out/Lesion/RatLesNet/multipleConfigurations/lr0.0001_concat1_f18_skipFalse/1/weights/w-293"
 #config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/differences_concat1_skipFalse/1/weights/w-699"
-config["config.find_weights"] = "/home/miguelv/data/in/weights/w-293"
-#config["config.find_weights"] = ""
+#config["config.find_weights"] = "/home/miguelv/data/in/weights/w-293"
+config["config.find_weights"] = ""
 
 ### Early stopping
 config["config.early_stopping_thr"] = 999
@@ -57,7 +57,7 @@ config["config.early_stopping_thr"] = 999
 ### Decrease Learning Rate On Plateau
 # After this number of times that the lr is updated, the training is stopped.
 # If this is -1, LR won't decrease.
-config["config.lr_updated_thr"] = 3
+config["config.lr_updated_thr"] = -1 # Originally 3
 
 ### Decrease Learning Rate when Val Loss is too high
 # 1.1 -> If val loss is 10% larger than the minimum recorded, decrease lr.
@@ -89,13 +89,13 @@ config["config.gpu_mem"] = float(results.gpu_mem)
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [0]
+all_configs = [0] # Run 5 times
 
 for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "differences_concat1_skipFalse"
+    exp_name = "boundaryloss_w3"
 
     try:
         print("Trying: "+exp_name)
