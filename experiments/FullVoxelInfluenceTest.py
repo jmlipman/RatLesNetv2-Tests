@@ -15,8 +15,8 @@ def main(config, Model, data, base_path, _run, start):
 
     # Load the volume we want to study
     #orig_volume = np.random.random((1, 18, 256, 256, 1))
-    #path_vol = "/home/miguelv/data/in/CR_DATA/02OCT2017/24h/11/scan.nii.gz"
-    path_vol = "/media/miguelv/HD1/CR_DATA/02OCT2017/24h/11/scan.nii.gz"
+    path_vol = "/home/miguelv/data/in/CR_DATA/02OCT2017/24h/11/scan.nii.gz"
+    #path_vol = "/media/miguelv/HD1/CR_DATA/02OCT2017/24h/11/scan.nii.gz"
 
     orig_volume = nib.load(path_vol).get_data()
     orig_volume = np.expand_dims(np.moveaxis(orig_volume, 2, 0), 0)

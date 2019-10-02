@@ -11,7 +11,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
-parser.add_argument("-start", dest="start", default=-1)
+parser.add_argument("-start", dest="start", default="-1")
 results = parser.parse_args()
 
 if results.start == "-1":
