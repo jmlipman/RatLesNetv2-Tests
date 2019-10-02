@@ -11,13 +11,13 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
-parser.add_argument("-start", dest="gpu_mem", default=-1)
+parser.add_argument("-start", dest="start", default=-1)
 results = parser.parse_args()
 
 if results.start == "-1":
     raise Exception("You must provide a -start")
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "results_voxelinfluence/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -48,8 +48,8 @@ config["config.L2"] = None
 
 ### Loading Weights
 #config["config.find_weights"] = "/home/miguelv/data/out/Lesion/RatLesNet/multipleConfigurations/lr0.0001_concat1_f18_skipFalse/1/weights/w-293"
-config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/differences_concat1_skipFalse/1/weights/w-699"
-#config["config.find_weights"] = "/home/miguelv/data/in/weights/w-293"
+#config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/differences_concat1_skipFalse/1/weights/w-699"
+config["config.find_weights"] = "/home/miguelv/data/in/weights/w-293"
 #config["config.find_weights"] = ""
 
 ### Early stopping
@@ -91,7 +91,7 @@ config["config.gpu_mem"] = float(results.gpu_mem)
 
 
 # Name of the experiment and path
-exp_name = "differences_concat1_skipFalse"
+exp_name = "concat1_skipFalse"
 
 experiment_path = BASE_PATH + exp_name + "/"
 ex.observers = [FileStorageObserver.create(experiment_path)]
