@@ -28,3 +28,5 @@ INFO - tensorflow - Summary name conv3d_11/kernel:0_grad is illegal; using conv3
 2019-10-02 12:41:32: Epoch: 3. Loss: 65.63108905156454. Val Loss: 65.66982301076254
 2019-10-02 12:42:50: Validation
 2019-10-02 12:43:02: Epoch: 4. Loss: 65.63108905156454. Val Loss: 65.66982301076254
+2019-10-02 12:44:20: Validation
+2019-10-02 12:44:31: Epoch: 5. Loss: 65.63108905156454. Val Loss: 65.66982301076254
