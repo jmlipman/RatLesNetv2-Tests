@@ -1,1 +1,0 @@
-[{"in_volume": "Placeholder:0", "out_segmentation": "Placeholder_1:0"}, "Softmax:0", "opt/Adam", "loss/Mean:0"]

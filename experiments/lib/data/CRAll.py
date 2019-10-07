@@ -168,12 +168,12 @@ class Data(BaseData):
 
         for b in range(data.shape[0]):
             for i in range(data.shape[-1]):
-                posmask = data[b,:,:,:,i].astype(bool)
-                negmask = ~posmask
-                #distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
-                distances[b,:,:,:,i] = dist(negmask) * negmask - (dist(posmask) - 1) * posmask
+                #posmask = data[b,:,:,:,i].astype(bool)
+                #negmask = ~posmask
+                #distances[b,:,:,:,i] = dist(negmask) * negmask - (dist(posmask) - 1) * posmask
+                distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
 
-        return np.abs(distances)
+        return distances
 
     def getNextTrainingBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
@@ -183,9 +183,10 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_train, Y_train, target = d_tmp
-        X = {"in_volume": X_train}
-        #Y = {"out_segmentation": self.onehot2prob(Y_train)}
+        X = {"in_volume": X_train, "in_weights": self.onehot2prob(Y_train)}
         Y = {"out_segmentation": Y_train}
+        #Y = {"out_segmentation": self.onehot2prob(Y_train)}
+        #Y = {"out_segmentation": Y_train}
         return X, Y, target
 
 
@@ -205,8 +206,9 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_val, Y_val, target = d_tmp
-        X = {"in_volume": X_val}
-        #Y = {"out_segmentation": self.onehot2prob(Y_val)}
+        X = {"in_volume": X_val, "in_weights": self.onehot2prob(Y_val)}
         Y = {"out_segmentation": Y_val}
+        #Y = {"out_segmentation": self.onehot2prob(Y_val)}
+        #Y = {"out_segmentation": Y_val}
         return X, Y, target
 

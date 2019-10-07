@@ -95,7 +95,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "exp1_133_exceptlast"
+    exp_name = "decreasealpha0.01"
 
     try:
         print("Trying: "+exp_name)

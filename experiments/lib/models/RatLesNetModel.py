@@ -76,21 +76,29 @@ class RatLesNet(ModelBase):
         """
         with tf.variable_scope("loss") as scope:
             # I don't need to create a model if I will load it
+            self.alpha_tensor = tf.Variable(1.0, name="alpha", trainable=False)
 
             # Regular cross entropy between the final output and the labels
             # Cross_entropy -> same size as the images without the channels: 18, 256, 256
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
-                    labels=self.placeholders["out_segmentation"])
-            self.loss = tf.reduce_mean(cross_entropy)
+            #cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
+            #        labels=self.placeholders["out_segmentation"])
+            #cross_entropy = tf.reduce_mean(cross_entropy)
+            #self.loss = cross_entropy
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
             # Boundary loss
-            #self.loss = tf.reduce_mean(self.prediction * self.placeholders["out_segmentation"])
+            #boundary = tf.reduce_mean(self.prediction * self.placeholders["in_weights"])
+            #self.loss = self.alpha_tensor*cross_entropy + (1-self.alpha_tensor)*boundary
 
             # Dice loss
-            #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
-            #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
-            #self.loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
+            num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
+            denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
+            self.loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
+
+            # Generalized dice loss corrects the values by the volume https://arxiv.org/pdf/1707.03237.pdf
+            #num = tf.reduce_sum(self.placeholders["in_weights"] * self.logits * self.placeholders["out_segmentation"])
+            #denom = tf.reduce_sum(self.placeholders["in_weights"] * (self.logits + self.placeholders["out_segmentation"]))
+            #self.loss = (1 - 2 * num / denom)
 
             if self.config["L2"] != None:
                 self.loss += tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * self.config["L2"]
@@ -101,6 +109,7 @@ class RatLesNet(ModelBase):
 
         self.placeholders = {}
         self.placeholders["in_volume"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 1])
+        self.placeholders["in_weights"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 2])
         self.placeholders["out_segmentation"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 2])
 
         #self.x_weights = tf.placeholder(tf.float32, [None, 18, 256, 256])
@@ -116,9 +125,9 @@ class RatLesNet(ModelBase):
                 bias_initializer=self.config["initB"])(self.placeholders["in_volume"])
 
         # input = block1
-        out2 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(out1)
+        out2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out1)
         out3 = MaxPooling3D((2, 2, 2), (2, 2, 2), padding="SAME")(out2)
-        out4 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(out3)
+        out4 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(out3)
         out5 = MaxPooling3D((2, 2, 2), (2, 2, 2), padding="SAME")(out4)
 
         #bottleneck = Conv3D(filters=f1, kernel_size=(1,1,1), strides=(1,1,1),
@@ -128,7 +137,7 @@ class RatLesNet(ModelBase):
 
         # Decoder
         unpool1 = Unpooling3DBlock(out5, out4, factor=(2,2,2), skip_connection=skip)(bottleneck)
-        dec1 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(unpool1)
+        dec1 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool1)
 
         bottleneck2 = Conv3D(filters=f1+g1*c1, kernel_size=(1,1,1), strides=(1,1,1),
                 padding="SAME", kernel_initializer=self.config["initW"], activation=self.config["act"],
@@ -136,7 +145,7 @@ class RatLesNet(ModelBase):
 
         unpool2 = Unpooling3DBlock(out3, out2, factor=(2,2,2), skip_connection=skip)(bottleneck2)
 
-        dec2 = RatLesNet_DenseBlock_133(self.config, concat=c1, growth_rate=g1)(unpool2)
+        dec2 = RatLesNet_DenseBlock(self.config, concat=c1, growth_rate=g1)(unpool2)
 
         # Classifier
         last = Conv3D(filters=self.config["classes"],

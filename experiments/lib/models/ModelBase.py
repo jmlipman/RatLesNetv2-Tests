@@ -131,12 +131,17 @@ class ModelBase:
         os.makedirs(self.config["base_path"] + "val_evol")
 
         log("Starting training")
+        local_alpha = 1.0
         while e < ep and keep_training:
 
             # Training
             d_tmp = data.getNextTrainingBatch()
             if d_tmp == None: # This typically happens when the disc where the data is located is unmounted
                 raise Exception("No data! Check the script can access to the data.")
+
+            if local_alpha > 0.01:
+                local_alpha -= 0.01
+                self.sess.run(self.alpha_tensor.assign(local_alpha))
 
             tr_loss = 0
             while d_tmp != None and keep_training:
@@ -185,7 +190,7 @@ class ModelBase:
                 if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
-                    np.save(self.config["base_path"] + "val_evol/" + name, s)
+                    #np.save(self.config["base_path"] + "val_evol/" + name, s)
                     s = np.argmax(s, axis=-1)
                     nib.save(nib.Nifti1Image(s, np.eye(4)), self.config["base_path"] + "val_evol/" + name + ".nii.gz")
 
