@@ -80,20 +80,20 @@ class RatLesNet(ModelBase):
 
             # Regular cross entropy between the final output and the labels
             # Cross_entropy -> same size as the images without the channels: 18, 256, 256
-            #cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
-            #        labels=self.placeholders["out_segmentation"])
-            #cross_entropy = tf.reduce_mean(cross_entropy)
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
+                    labels=self.placeholders["out_segmentation"])
+            cross_entropy = tf.reduce_mean(cross_entropy)
             #self.loss = cross_entropy
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
             # Boundary loss
-            #boundary = tf.reduce_mean(self.prediction * self.placeholders["in_weights"])
-            #self.loss = self.alpha_tensor*cross_entropy + (1-self.alpha_tensor)*boundary
+            boundary = tf.reduce_mean(self.prediction * self.placeholders["in_weights"])
+            self.loss = self.alpha_tensor*cross_entropy + (1-self.alpha_tensor)*boundary
 
             # Dice loss
-            num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
-            denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
-            self.loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
+            #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
+            #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
+            #self.loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
 
             # Generalized dice loss corrects the values by the volume https://arxiv.org/pdf/1707.03237.pdf
             #num = tf.reduce_sum(self.placeholders["in_weights"] * self.logits * self.placeholders["out_segmentation"])

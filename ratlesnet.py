@@ -95,7 +95,7 @@ for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "decreasealpha0.01"
+    exp_name = "400switch"
 
     try:
         print("Trying: "+exp_name)

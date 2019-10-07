@@ -168,11 +168,12 @@ class Data(BaseData):
 
         for b in range(data.shape[0]):
             for i in range(data.shape[-1]):
-                #posmask = data[b,:,:,:,i].astype(bool)
-                #negmask = ~posmask
-                #distances[b,:,:,:,i] = dist(negmask) * negmask - (dist(posmask) - 1) * posmask
-                distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
+                posmask = data[b,:,:,:,i].astype(bool)
+                negmask = ~posmask
+                distances[b,:,:,:,i] = dist(negmask) * negmask - (dist(posmask) - 1) * posmask
+                #distances[b,:,:,:,i] = dist(~data[b,:,:,:,i].astype(bool))
 
+        #return (distances-distances.min())/(distances.max()-distances.min())
         return distances
 
     def getNextTrainingBatch(self):

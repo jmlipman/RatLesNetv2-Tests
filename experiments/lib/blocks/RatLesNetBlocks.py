@@ -63,20 +63,13 @@ class RatLesNet_DenseBlock_133(BlockBase):
             x_input = input
             outputs = [x_input]
 
-            for i in range(self.concat-1):
+            for i in range(self.concat):
                 conv = Conv3D(filters=self.growth_rate, kernel_size=(1,3,3),
                         strides=(1,1,1), padding="SAME",
                         kernel_initializer=self.conf["initW"],
                         bias_initializer=self.conf["initB"], activation=self.conf["act"])(x_input)
                 outputs.append(conv)
                 x_input = CombineBlock(outputs).concat()
-            # Last conv in the dense
-            conv = Conv3D(filters=self.growth_rate, kernel_size=(3,3,3),
-                    strides=(1,1,1), padding="SAME",
-                    kernel_initializer=self.conf["initW"],
-                    bias_initializer=self.conf["initB"], activation=self.conf["act"])(x_input)
-            outputs.append(conv)
-            x_input = CombineBlock(outputs).concat()
 
             # Not in use. Provides slightly worse results although it reduces
             # the number of parameters quite a lot.

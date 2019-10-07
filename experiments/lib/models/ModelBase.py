@@ -131,7 +131,7 @@ class ModelBase:
         os.makedirs(self.config["base_path"] + "val_evol")
 
         log("Starting training")
-        local_alpha = 1.0
+        local_alpha = 1.01
         while e < ep and keep_training:
 
             # Training
@@ -139,9 +139,11 @@ class ModelBase:
             if d_tmp == None: # This typically happens when the disc where the data is located is unmounted
                 raise Exception("No data! Check the script can access to the data.")
 
-            if local_alpha > 0.01:
-                local_alpha -= 0.01
-                self.sess.run(self.alpha_tensor.assign(local_alpha))
+            #if local_alpha > 0.01:
+            #    local_alpha -= 0.01
+            #    self.sess.run(self.alpha_tensor.assign(local_alpha))
+            if e > 400:
+                self.sess.run(self.alpha_tensor.assign(0.0))
 
             tr_loss = 0
             while d_tmp != None and keep_training:
