@@ -142,8 +142,8 @@ class ModelBase:
             #if local_alpha > 0.01:
             #    local_alpha -= 0.01
             #    self.sess.run(self.alpha_tensor.assign(local_alpha))
-            if e > 400:
-                self.sess.run(self.alpha_tensor.assign(0.0))
+            #if e > 400:
+            #    self.sess.run(self.alpha_tensor.assign(0.0))
 
             tr_loss = 0
             while d_tmp != None and keep_training:
