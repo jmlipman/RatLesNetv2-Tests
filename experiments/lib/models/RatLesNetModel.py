@@ -91,9 +91,9 @@ class RatLesNet(ModelBase):
             #self.loss = self.alpha_tensor*cross_entropy + (1-self.alpha_tensor)*boundary
 
             # Dice loss
-            num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
-            denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
-            dice_loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
+            #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
+            #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
+            #dice_loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
 
             # Generalized dice loss corrects the values by the volume https://arxiv.org/pdf/1707.03237.pdf
             # It probably makes no sense to use this with the in_weights obtained with the distance maps.
@@ -102,16 +102,16 @@ class RatLesNet(ModelBase):
             #self.loss = (1 - 2 * num / denom)
 
             # Length
-            #x_ = self.logits[:,1:,:,:,:] - self.logits[:,:-1,:,:,:]
-            #y_ = self.logits[:,:,1:,:,:] - self.logits[:,:,:-1,:,:]
-            #z_ = self.logits[:,:,:,1:,:] - self.logits[:,:,:,:-1,:]
-            #dx_ = tf.abs(x_[:,:,:-1,:-1,:])
-            #dy_ = tf.abs(y_[:,:-1,:,:-1,:])
-            #dz_ = tf.abs(z_[:,:-1,:-1,:,:])
-            #length = tf.reduce_sum(dx_ + dy_ + dz_)
+            x_ = self.prediction[:,1:,:,:,:] - self.prediction[:,:-1,:,:,:]
+            y_ = self.prediction[:,:,1:,:,:] - self.prediction[:,:,:-1,:,:]
+            z_ = self.prediction[:,:,:,1:,:] - self.prediction[:,:,:,:-1,:]
+            dx_ = tf.abs(x_[:,:,:-1,:-1,:])
+            dy_ = tf.abs(y_[:,:-1,:,:-1,:])
+            dz_ = tf.abs(z_[:,:-1,:-1,:,:])
+            length = tf.reduce_sum(dx_ + dy_ + dz_)
 
-            #self.loss = cross_entropy + self.config["lambda_length"]*length
-            self.loss = cross_entropy + dice_loss
+            self.loss = cross_entropy + self.config["lambda_length"]*length
+            #self.loss = cross_entropy + dice_loss
 
             if self.config["L2"] != None:
                 self.loss += tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * self.config["L2"]

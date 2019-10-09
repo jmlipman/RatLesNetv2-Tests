@@ -89,14 +89,13 @@ config["config.gpu_mem"] = float(results.gpu_mem)
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [1e-7] # Run 5 times
+all_configs = [1e-6] # Run 5 times
 
 for l2 in all_configs:
 
     ci += 1
     # Name of the experiment and path
     exp_name = "CE_length_"+str(l2)
-    exp_name = "CE_dice"
 
     try:
         print("Trying: "+exp_name)
@@ -109,7 +108,7 @@ for l2 in all_configs:
         #config["config.growth_rate"] = fsize
         #config["config.concat"] = concat
         #config["config.skip_connection"] = skip
-        #config["config.lambda_length"] = l2
+        config["config.lambda_length"] = l2
 
         ex.run(config_updates=config)
 

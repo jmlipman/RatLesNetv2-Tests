@@ -192,7 +192,7 @@ class ModelBase:
                 if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
-                    #np.save(self.config["base_path"] + "val_evol/" + name, s)
+                    np.save(self.config["base_path"] + "val_evol/" + name, s)
                     s = np.argmax(s, axis=-1)
                     nib.save(nib.Nifti1Image(s, np.eye(4)), self.config["base_path"] + "val_evol/" + name + ".nii.gz")
 
