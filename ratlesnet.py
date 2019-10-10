@@ -81,22 +81,23 @@ config["config.gpu_mem"] = float(results.gpu_mem)
 #config["config.alpha_l2"] = 0.01 # Typical value
 
 ess = [-1, 3]
+lambdas = [1e-5, 1e-6]
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 
-#params = [ess]
-#all_configs = list(itertools.product(*params))
+params = [ess, lambdas]
+all_configs = list(itertools.product(*params))
 ci = 0
 
 #all_configs = [0] # Run 5 times
 
-for es in ess:
+for es, lambd in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "CE_weighted_log"
+    exp_name = "CE_weighted_length"
     if es == 3:
         exp_name += "_ES"
 
@@ -111,7 +112,7 @@ for es in ess:
         #config["config.growth_rate"] = fsize
         #config["config.concat"] = concat
         config["config.lr_updated_thr"] = es
-        #config["config.lambda_length"] = l2
+        config["config.lambda_length"] = lambd
 
         ex.run(config_updates=config)
 

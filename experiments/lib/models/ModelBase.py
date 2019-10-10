@@ -191,8 +191,8 @@ class ModelBase:
 
                 # TODO: Check if I can do this "outside" in the experiment level.
                 # Saving progress.
-                #if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5": # For NMR CS3
-                if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
+                if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5": # For NMR CS3
+                #if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
                     #np.save(self.config["base_path"] + "val_evol/" + name, w_tmp)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)

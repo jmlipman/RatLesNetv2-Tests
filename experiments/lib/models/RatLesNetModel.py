@@ -88,7 +88,7 @@ class RatLesNet(ModelBase):
             #yi = self.placeholders["out_segmentation"] * self.placeholders["in_weights"]
             #cross_entropy = -tf.reduce_sum(yi * tf.log(si + 1e-6), axis=(1,2,3,4))
             cross_entropy = tf.reduce_mean(cross_entropy)
-            self.loss = cross_entropy
+            #self.loss = cross_entropy
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
             # MSE
@@ -110,7 +110,6 @@ class RatLesNet(ModelBase):
             #self.loss = (1 - 2 * num / denom)
 
             # Length
-            """
             x_ = self.prediction[:,1:,:,:,:] - self.prediction[:,:-1,:,:,:]
             y_ = self.prediction[:,:,1:,:,:] - self.prediction[:,:,:-1,:,:]
             z_ = self.prediction[:,:,:,1:,:] - self.prediction[:,:,:,:-1,:]
@@ -118,9 +117,8 @@ class RatLesNet(ModelBase):
             dy_ = tf.abs(y_[:,:-1,:,:-1,:])
             dz_ = tf.abs(z_[:,:-1,:-1,:,:])
             length = tf.reduce_sum(dx_ + dy_ + dz_)
-            """
 
-            #self.loss = cross_entropy + self.config["lambda_length"]*length
+            self.loss = cross_entropy + self.config["lambda_length"]*length
             #self.loss = cross_entropy + dice_loss
 
             if self.config["L2"] != None:
