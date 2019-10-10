@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
 results = parser.parse_args()
 
-BASE_PATH = "delete/"
+BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -92,7 +92,7 @@ ci = 0
 
 #all_configs = [0] # Run 5 times
 
-for es, in all_configs:
+for es in ess:
 
     ci += 1
     # Name of the experiment and path
