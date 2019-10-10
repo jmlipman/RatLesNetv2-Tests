@@ -7,6 +7,7 @@ from experiments.lib.util import TB_Log, log
 from tensorflow.keras.layers import Conv3D
 from tensorflow.keras.regularizers import l2
 import nibabel as nib
+from skimage import measure
 
 from tensorflow.core.protobuf import rewriter_config_pb2
 
@@ -116,6 +117,7 @@ class ModelBase:
         #print(tf.global_variables())
 
         # Track gradients here. After each sample is shown to the network.
+        """
         target_grad = ["conv3d/kernel:0", "RatLesNet_DenseBlock_2/conv3d_4/kernel:0", "conv3d_11/kernel:0"]
         if len(target_grad) > 0:
             for v in tf.global_variables():
@@ -123,7 +125,7 @@ class ModelBase:
                     grads_and_vars = self.config["opt"].compute_gradients(self.prediction, [v])[0]
                     tf.summary.histogram(v.name+"_grad", grads_and_vars[0])
             summaries = tf.summary.merge_all()
-
+        """
         # End of tracking gradients.
         #warming_up = np.linspace(0, 1e-4, 36*5)
 
@@ -161,8 +163,8 @@ class ModelBase:
                 _, tr_loss_tmp = self.sess.run([self.train_step, self.loss], feed_dict=feeding, options=run_options)
                 #a1, a2 = self.sess.run([self.prediction, self.placeholders["out_segmentation"]], feed_dict=feeding, options=run_options)
 
-                summ = self.sess.run(summaries, feed_dict=feeding, options=run_options)
-                self.tb.writer.add_summary(summ, it)
+                #summ = self.sess.run(summaries, feed_dict=feeding, options=run_options)
+                #self.tb.writer.add_summary(summ, it)
 
                 tr_loss += tr_loss_tmp * 1/len(data.getFiles("training"))
                 # This makes sense with _lr is a tensor (AdamWOptimizer)
@@ -175,6 +177,7 @@ class ModelBase:
             log("Validation")
             d_tmp = data.getNextValidationBatch()
             val_loss = 0
+            islands = [] # To study indepdent components
             while d_tmp != None and keep_training:
                 # Gets the inputs and outputs of the network
                 feeding = {}
@@ -183,7 +186,7 @@ class ModelBase:
                 for pl in d_tmp[1].keys():
                     feeding[self.placeholders[pl]] = d_tmp[1][pl]
 
-                val_loss_tmp, pred_tmp = self.sess.run([self.loss, self.prediction], feed_dict=feeding)
+                val_loss_tmp, pred_tmp, w_tmp = self.sess.run([self.loss, self.prediction, self.placeholders["in_weights"]], feed_dict=feeding)
                 #val_loss_tmp = self.sess.run(self.loss, feed_dict=feeding)
 
                 # TODO: Check if I can do this "outside" in the experiment level.
@@ -191,17 +194,22 @@ class ModelBase:
                 #if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5": # For NMR CS3
                 if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
+                    #np.save(self.config["base_path"] + "val_evol/" + name, w_tmp)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)
-                    np.save(self.config["base_path"] + "val_evol/" + name, s)
+                    #np.save(self.config["base_path"] + "val_evol/" + name, s)
                     s = np.argmax(s, axis=-1)
                     nib.save(nib.Nifti1Image(s, np.eye(4)), self.config["base_path"] + "val_evol/" + name + ".nii.gz")
 
                 val_loss += val_loss_tmp * 1/len(data.getFiles("validation"))
+                islands.append(np.max(measure.label(np.argmax(pred_tmp[0], axis=-1))))
                 d_tmp = data.getNextValidationBatch()
+
+
             prev_val_loss.append(val_loss)
 
             val_loss_text = " Val Loss: {}".format(prev_val_loss[-1])
             self.tb.add_scalar(prev_val_loss[-1], "val_loss", e)
+            self.tb.add_scalar(np.mean(islands), "islands", e)
 
             # Routine to save the model
             if self.checkSaveModel(e, val_loss):

@@ -176,6 +176,23 @@ class Data(BaseData):
         #return (distances-distances.min())/(distances.max()-distances.min())
         return distances
 
+    def surfacedist(self, data):
+        # I am assuming there is only one label
+        data = np.argmax(data, axis=-1)
+        surface = np.zeros(data.shape)
+        distances = np.zeros(data.shape)
+        for b in range(data.shape[0]):
+            for x in range(data.shape[1]):
+                for y in range(data.shape[2]):
+                    for z in range(data.shape[3]):
+                        if data[b,x,y,z]==1:
+                            piece = data[b,x-1:x+2,y-1:y+2,z-1:z+2]
+                            if np.sum(piece) != 27:
+                                surface[b,x,y,z] = 1
+            distances[b,:,:,:] = np.log(dist(1-surface)+np.e)
+
+        return distances
+
     def getNextTrainingBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
         # Take care of the batch thing in here
@@ -184,7 +201,7 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_train, Y_train, target = d_tmp
-        X = {"in_volume": X_train, "in_weights": self.onehot2prob(Y_train)}
+        X = {"in_volume": X_train, "in_weights": self.surfacedist(Y_train)}
         Y = {"out_segmentation": Y_train}
         #Y = {"out_segmentation": self.onehot2prob(Y_train)}
         #Y = {"out_segmentation": Y_train}
@@ -207,7 +224,7 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_val, Y_val, target = d_tmp
-        X = {"in_volume": X_val, "in_weights": self.onehot2prob(Y_val)}
+        X = {"in_volume": X_val, "in_weights": self.surfacedist(Y_val)}
         Y = {"out_segmentation": Y_val}
         #Y = {"out_segmentation": self.onehot2prob(Y_val)}
         #Y = {"out_segmentation": Y_val}
