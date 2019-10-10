@@ -86,8 +86,8 @@ ess = [-1, 3]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 
-params = [ess]
-all_configs = list(itertools.product(*params))
+#params = [ess]
+#all_configs = list(itertools.product(*params))
 ci = 0
 
 #all_configs = [0] # Run 5 times
