@@ -141,10 +141,10 @@ class ModelBase:
             if d_tmp == None: # This typically happens when the disc where the data is located is unmounted
                 raise Exception("No data! Check the script can access to the data.")
 
-            #if local_alpha > 0.01:
-            #    local_alpha -= 0.01
-            #    self.sess.run(self.alpha_tensor.assign(local_alpha))
-            #if e > 400:
+            if local_alpha > 0.01:
+                local_alpha -= 0.01
+                self.sess.run(self.alpha_tensor.assign(local_alpha))
+            #if e >= 400:
             #    self.sess.run(self.alpha_tensor.assign(0.0))
 
             tr_loss = 0
@@ -191,8 +191,8 @@ class ModelBase:
 
                 # TODO: Check if I can do this "outside" in the experiment level.
                 # Saving progress.
-                if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5": # For NMR CS3
-                #if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
+                #if d_tmp[2][0] == "02NOV2016_2h_17" or d_tmp[2][0] == "02NOV2016_24h_5": # For NMR CS3
+                if d_tmp[2][0] == "02NOV2016_2h_40" or d_tmp[2][0] == "02NOV2016_24h_43": # For FUJ PC
                     name = d_tmp[2][0] + "_" + str(e)
                     #np.save(self.config["base_path"] + "val_evol/" + name, w_tmp)
                     s = np.moveaxis(np.reshape(pred_tmp, (18, 256, 256, 2)), 0, 2)

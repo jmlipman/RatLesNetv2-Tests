@@ -76,40 +76,42 @@ class RatLesNet(ModelBase):
         """
         with tf.variable_scope("loss") as scope:
             # I don't need to create a model if I will load it
-            #self.alpha_tensor = tf.Variable(1.0, name="alpha", trainable=False)
+            self.alpha_tensor = tf.Variable(1.0, name="alpha", trainable=False)
 
             # Equivalent (original) cross entropy
             #cross_entropy = -tf.reduce_sum(self.placeholders["out_segmentation"]*tf.log(self.prediction+1e-20), axis=(1,2,3,4))
             # Regular cross entropy between the final output and the labels
             # Cross_entropy -> same size as the images without the channels: 18, 256, 256
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
-                    labels=self.placeholders["out_segmentation"]) * self.placeholders["in_weights"]
+            #cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits,
+            #        labels=self.placeholders["out_segmentation"])# * self.placeholders["in_weights"]
             #si = self.prediction * self.placeholders["in_weights"]
             #yi = self.placeholders["out_segmentation"] * self.placeholders["in_weights"]
             #cross_entropy = -tf.reduce_sum(yi * tf.log(si + 1e-6), axis=(1,2,3,4))
-            cross_entropy = tf.reduce_mean(cross_entropy)
+            #cross_entropy = tf.reduce_mean(cross_entropy)
             #self.loss = cross_entropy
             #self.loss = tf.reduce_sum(cross_entropy * self.x_weights)
 
             # MSE
             #self.loss = tf.reduce_mean(tf.pow(self.logits - self.placeholders["in_weights"], 2))
 
-            # Boundary loss
-            #boundary = tf.reduce_mean(self.prediction * self.placeholders["in_weights"])
-            #self.loss = self.alpha_tensor*cross_entropy + (1-self.alpha_tensor)*boundary
-
             # Dice loss
-            #num = 2 * tf.reduce_sum(self.logits * self.placeholders["out_segmentation"], axis=[1,2,3,4])
-            #denom = tf.reduce_sum(tf.square(self.logits) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
-            #dice_loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
+            num = 2 * tf.reduce_sum(self.prediction * self.placeholders["out_segmentation"], axis=[1,2,3,4])
+            denom = tf.reduce_sum(tf.square(self.prediction) + tf.square(self.placeholders["out_segmentation"]), axis=[1,2,3,4])
+            dice_loss = (1 - tf.reduce_sum(num / (denom + 1e-6)))
+
+            # Boundary loss
+            boundary = tf.reduce_mean(self.prediction * self.placeholders["in_weights"])
+            self.loss = self.alpha_tensor*dice_loss + (1-self.alpha_tensor)*boundary
 
             # Generalized dice loss corrects the values by the volume https://arxiv.org/pdf/1707.03237.pdf
             # It probably makes no sense to use this with the in_weights obtained with the distance maps.
+                    #Maybe this didnt work because im using logits instead of predictions
             #num = tf.reduce_sum(self.placeholders["in_weights"] * self.logits * self.placeholders["out_segmentation"])
             #denom = tf.reduce_sum(self.placeholders["in_weights"] * (self.logits + self.placeholders["out_segmentation"]))
             #self.loss = (1 - 2 * num / denom)
 
             # Length
+            """
             x_ = self.prediction[:,1:,:,:,:] - self.prediction[:,:-1,:,:,:]
             y_ = self.prediction[:,:,1:,:,:] - self.prediction[:,:,:-1,:,:]
             z_ = self.prediction[:,:,:,1:,:] - self.prediction[:,:,:,:-1,:]
@@ -118,8 +120,9 @@ class RatLesNet(ModelBase):
             dz_ = tf.abs(z_[:,:-1,:-1,:,:])
             length = tf.reduce_sum(dx_ + dy_ + dz_)
 
-            self.loss = cross_entropy + self.config["lambda_length"]*length
-            #self.loss = cross_entropy + dice_loss
+            self.loss = dice_loss + self.config["lambda_length"]*length
+            """
+            #self.loss = cross_entropy
 
             if self.config["L2"] != None:
                 self.loss += tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() ]) * self.config["L2"]
@@ -130,7 +133,7 @@ class RatLesNet(ModelBase):
 
         self.placeholders = {}
         self.placeholders["in_volume"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 1])
-        self.placeholders["in_weights"] = tf.placeholder(tf.float32, [None, 18, 256, 256])
+        self.placeholders["in_weights"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 2])
         self.placeholders["out_segmentation"] = tf.placeholder(tf.float32, [None, 18, 256, 256, 2])
 
         #self.x_weights = tf.placeholder(tf.float32, [None, 18, 256, 256])

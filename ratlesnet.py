@@ -93,11 +93,11 @@ ci = 0
 
 #all_configs = [0] # Run 5 times
 
-for es, lambd in all_configs:
+for es in ess:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "CE_weighted_length"
+    exp_name = "decreasingalpha0.01"
     if es == 3:
         exp_name += "_ES"
 
@@ -112,7 +112,7 @@ for es, lambd in all_configs:
         #config["config.growth_rate"] = fsize
         #config["config.concat"] = concat
         config["config.lr_updated_thr"] = es
-        config["config.lambda_length"] = lambd
+        #config["config.lambda_length"] = lambd
 
         ex.run(config_updates=config)
 

@@ -201,7 +201,7 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_train, Y_train, target = d_tmp
-        X = {"in_volume": X_train, "in_weights": self.surfacedist(Y_train)}
+        X = {"in_volume": X_train, "in_weights": self.onehot2prob(Y_train)}
         Y = {"out_segmentation": Y_train}
         #Y = {"out_segmentation": self.onehot2prob(Y_train)}
         #Y = {"out_segmentation": Y_train}
@@ -224,7 +224,7 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_val, Y_val, target = d_tmp
-        X = {"in_volume": X_val, "in_weights": self.surfacedist(Y_val)}
+        X = {"in_volume": X_val, "in_weights": self.onehot2prob(Y_val)}
         Y = {"out_segmentation": Y_val}
         #Y = {"out_segmentation": self.onehot2prob(Y_val)}
         #Y = {"out_segmentation": Y_val}
