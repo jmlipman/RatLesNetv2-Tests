@@ -1,22 +1,24 @@
 from sacred.observers import FileStorageObserver
-from experiments.RegularTrainingTest import ex
+from experiments.TrainingEvaluation import ex
 #from experiments.VoxelIndividualTest import ex
 #from experiments.VoxelInfluenceTest import ex
-from experiments.lib.util import Twitter
-from experiments.lib.models.RatLesNetModel import RatLesNet
-from experiments.lib.data.CRAll import Data
-import tensorflow as tf
+#from experiments.lib.util import Twitter
+from lib.models.RatLesNet import RatLesNet
+from lib.data.CRAllDataset import CRAllDataset as Data
 import itertools, os
-import time
-import argparse
+import time, torch
+import numpy as np
+from lib.losses import *
+from lib.utils import he_normal
+from lib.lr_scheduler import CustomReduceLROnPlateau
+
+# Speed up the script.
+# This seems to not be a good idea when the input sizes change during the training.
+torch.backends.cudnn.benchmark = True
 
 ### TODO
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-gpu_mem", dest="gpu_mem", default=1)
-results = parser.parse_args()
 
 BASE_PATH = "results_RatLesNet/"
 messageTwitter = "ratlesnet_"
@@ -24,82 +26,94 @@ messageTwitter = "ratlesnet_"
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 ### Fixed configuration
-data = Data()
-data.split(folds=1, prop=[0.8])
+# TODO let's see how to put the data.
+#data = Data
+#data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
-config["data"] = data
+config["data"] = Data
 config["Model"] = RatLesNet
 config["config.lr"] = 1e-4
 config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
-config["config.initW"] = tf.keras.initializers.he_normal()
-config["config.initB"] = tf.constant_initializer(0)
-config["config.act"] = "relu"
+#config["config.initW"] = torch.nn.init.kaiming_normal_
+config["config.initW"] = he_normal
+config["config.initB"] = torch.nn.init.zeros_
+config["config.act"] = torch.nn.ReLU()
+#config["config.loss_fn"] = torch.nn.BCELoss()
+config["config.loss_fn"] = CrossEntropyLoss
+config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
+
 
 ### Model architecture
 config["config.growth_rate"] = 18
 config["config.concat"] = 3
+config["config.first_filters"] = 12
 config["config.skip_connection"] = "concat" #sum, False
+config["config.dim_reduc"] = False
 
-### L2 regularization
-config["config.L2"] = None
+### Save validation results
+# The following brains will be saved during validation. If not wanted, empty list.
+config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
+config["config.save_npy"] = False
+config["config.save_prediction"] = False # Save preds on Testing section.
 
 ### Loading Weights
-#config["config.find_weights"] = "/home/miguelv/data/out/Lesion/RatLesNet/multipleConfigurations/lr0.0001_concat1_f18_skipFalse/1/weights/w-293"
-#config["config.find_weights"] = "/home/miguelv/pythonUEF/MiNet/results_RatLesNet/differences_concat1_skipFalse/1/weights/w-699"
-#config["config.find_weights"] = "/home/miguelv/data/in/weights/w-293"
-config["config.find_weights"] = ""
+#config["config.model_state"] = "results_RatLesNet/CE_length_1e-06/2/model/model-78"
+config["config.model_state"] = ""
+
+### LR Scheduler. Reduce learning rate on plateau
+config["config.lr_scheduler_patience"] = 4
+config["config.lr_scheduler_factor"] = 0.1
+config["config.lr_scheduler_improvement_thr"] = 0.01 # Percentage to improve
+# After this number of times that the lr is updated, the training is stopped.
+config["config.lr_scheduler_limit"] = 3
+config["config.lr_scheduler_verbose"] = True
+config["config.lr_scheduler"] = CustomReduceLROnPlateau(
+        patience=config["config.lr_scheduler_patience"],
+        factor=config["config.lr_scheduler_factor"],
+        improvement_thr=config["config.lr_scheduler_improvement_thr"],
+        limit=config["config.lr_scheduler_limit"],
+        verbose=config["config.lr_scheduler_verbose"]
+        )
+
+### Regularization
+config["config.alpha_length"] = 0.05
+
+
+####### Not migrated confs:
+### L2 regularization
+config["config.L2"] = None
 
 ### Early stopping
 config["config.early_stopping_thr"] = 999
 
-### Decrease Learning Rate On Plateau
-# After this number of times that the lr is updated, the training is stopped.
-# If this is -1, LR won't decrease.
-config["config.lr_updated_thr"] = 3 # Originally 3
-
-### Decrease Learning Rate when Val Loss is too high
-# 1.1 -> If val loss is 10% larger than the minimum recorded, decrease lr.
-config["config.lr_valloss_ratio"] = 1.1
-
 ### Weight Decay
-config["config.weight_decay"] = None # None will use Adam
+# TODO I am not sure I need all of this now, since weight decay can be
+# set in a much easier way now.
+#config["config.weight_decay"] = None # None will use Adam
 # Every X epochs, it will decrease Y rate.
-config["config.wd_epochs"] = 200
-config["config.wd_rate"] = 0.1 # Always 0.1
-config["config.wd_epochs"] = [int(len(data.getFiles("training"))*config["config.wd_epochs"]*i/config["config.batch"]) for i in range(1, int(config["config.epochs"]/config["config.wd_epochs"]+1))]
-config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
+#config["config.wd_epochs"] = 200
+#config["config.wd_rate"] = 0.1 # Always 0.1
+#config["config.wd_epochs"] = [int(len(data.getFiles("training"))*config["config.wd_epochs"]*i/config["config.batch"]) for i in range(1, int(config["config.epochs"]/config["config.wd_epochs"]+1))]
+#config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
 
-# Other
-config["config.gpu_mem"] = float(results.gpu_mem)
-
-### Legacy
-#config["config.opt"] = tf.train.AdamOptimizer(learning_rate=config["config.lr"])
-#config["config.opt"] = tf.contrib.opt.AdamWOptimizer(weight_decay=config["weight_decay"], learning_rate=config["lr"])
-#config["config.loss"] = "own"
-#config["config.alpha_l2"] = 0.01 # Typical value
-
-ess = [-1, 3]
-lambdas = [1e-5, 1e-6]
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 
-params = [ess, lambdas]
-all_configs = list(itertools.product(*params))
+#params = [lrs, concats, skips, fsizes]
+#all_configs = list(itertools.product(*params))
 ci = 0
 
-#all_configs = [0] # Run 5 times
+all_configs = [1e-6] # Run 5 times
 
-for es in ess:
+for _ in all_configs:
 
     ci += 1
     # Name of the experiment and path
-    exp_name = "decreasingalpha0.01"
-    if es == 3:
-        exp_name += "_ES"
+    exp_name = "CE_WeightClass_Distance"
 
     try:
         print("Trying: "+exp_name)
@@ -111,8 +125,8 @@ for es in ess:
         #config["config.lr"] = lr
         #config["config.growth_rate"] = fsize
         #config["config.concat"] = concat
-        config["config.lr_updated_thr"] = es
-        #config["config.lambda_length"] = lambd
+        #config["config.skip_connection"] = skip
+        #config["config.lambda_length"] = l2
 
         ex.run(config_updates=config)
 
@@ -120,9 +134,6 @@ for es in ess:
         print(show_text)
     except KeyboardInterrupt:
         raise
-    except tf.errors.ResourceExhaustedError:
-        with open("no_memory_errors", "a") as f:
-            f.write(exp_name + "\n")
     except:
         raise
 

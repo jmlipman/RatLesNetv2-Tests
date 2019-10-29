@@ -4,12 +4,16 @@ import pandas as pd
 import os
 import random
 from scipy import ndimage
-from experiments.lib.data.BaseData import BaseData
+from lib.data.BaseData import BaseData
 from scipy.ndimage import distance_transform_edt as dist
+import torch
+
+def np2cuda(inp):
+    return torch.from_numpy(inp.astype(np.float32)).cuda()
 
 
 class Data(BaseData):
-    def __init__(self, batch=1, randomize=False, depth_first=True, seg="miguel"):
+    def __init__(self, batch=1, randomize=False, seg="miguel"):
         """In the initializer we gather the location of the files that will
            be used for training, testing and validation.
            Counters will be set to 0, so that during the data retrieval
@@ -20,8 +24,6 @@ class Data(BaseData):
            `batch`: batch size.
            `randomize`: If True, every time this is executed the data within
             the splits for training, test and validation will be different.
-            `depth_first`: As TF requires BDWHC, if this is True then the
-            slices are moved to the front: DWH.
             `seg`: which segmentation to use, mine or CRs.
         """
         # Get the lists
@@ -39,7 +41,6 @@ class Data(BaseData):
             raise Exception("Unknown PC")
 
         self.randomize = randomize
-        self.depth_first = depth_first
         self.ext = "_miguel" if seg == "miguel" else "_lesion"
         self.batch = batch
         # These dictionaries will contain the X and Y data
@@ -138,8 +139,7 @@ class Data(BaseData):
             # Read the actual data
             X_train = nib.load(target+"scan.nii.gz").get_data()
 
-            if self.depth_first:
-                X_train = np.moveaxis(X_train, 2, 0)
+            X_train = np.moveaxis(X_train, -1, 0)
             X_train = np.expand_dims(X_train, axis=0)
 
             if c == 1:
@@ -149,18 +149,19 @@ class Data(BaseData):
             if os.path.isfile(target+"scan"+ext+".nii.gz"):
                 Y_train = nib.load(target+"scan"+ext+".nii.gz").get_data()
                 #Y_train = np.expand_dims(Y_train, -1)
-                Y_train = np.stack([1.0*(Y_train==j) for j in range(2)], axis=-1)
-                if self.depth_first:
-                    Y_train = np.moveaxis(Y_train, 2, 0)
+                Y_train = np.stack([1.0*(Y_train==j) for j in range(2)], axis=0)
             else:
-                Y_train = np.ones(list(X_train.shape[1:-1])+[2])
-                Y_train[:,:,:,1] = 0
+                Y_train = np.ones([2] + list(X_train.shape[2:]))
+                Y_train[1,:,:,:] = 0
+            #print(Y_train.shape)
 
+            #Y_train = np.moveaxis(Y_train, -1, 0)
             Y_train = np.expand_dims(Y_train, 0)
 
         self.counters[c] += 1
 
         # The ID must be a list, so that I can later iterate over it
+        #return X_train, Y_train, [id_]
         return X_train, Y_train, [id_]
 
     def onehot2prob(self, data):
@@ -201,11 +202,12 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_train, Y_train, target = d_tmp
-        X = {"in_volume": X_train, "in_weights": self.onehot2prob(Y_train)}
-        Y = {"out_segmentation": Y_train}
+        #X = {"in_volume": X_train, "in_weights": self.onehot2prob(Y_train)}
+        #Y = {"out_segmentation": Y_train}
+        X = [np2cuda(X_train), np2cuda(self.onehot2prob(Y_train))]
         #Y = {"out_segmentation": self.onehot2prob(Y_train)}
         #Y = {"out_segmentation": Y_train}
-        return X, Y, target
+        return X, np2cuda(Y_train), target
 
 
     def getNextTestBatch(self):
@@ -214,9 +216,10 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_test, Y_test, target = d_tmp
-        X = {"in_volume": X_test}
-        Y = {"out_segmentation": Y_test} # When using boundary loss, I don't need onehot2prob here.
-        return X, Y, target
+        #X = {"in_volume": X_test}
+        #Y = {"out_segmentation": Y_test} # When using boundary loss, I don't need onehot2prob here.
+        X = [np2cuda(X_test)]
+        return X, np2cuda(Y_test), target
 
     def getNextValidationBatch(self):
         # Returns (1,240,240,155,4), Age, Survival
@@ -224,9 +227,10 @@ class Data(BaseData):
         if d_tmp is None:
             return None
         X_val, Y_val, target = d_tmp
-        X = {"in_volume": X_val, "in_weights": self.onehot2prob(Y_val)}
-        Y = {"out_segmentation": Y_val}
+        #X = {"in_volume": X_val, "in_weights": self.onehot2prob(Y_val)}
+        #Y = {"out_segmentation": Y_val}
+        X = [np2cuda(X_val), np2cuda(self.onehot2prob(Y_val))]
         #Y = {"out_segmentation": self.onehot2prob(Y_val)}
         #Y = {"out_segmentation": Y_val}
-        return X, Y, target
+        return X, np2cuda(Y_val), target
 
