@@ -163,6 +163,7 @@ def main(config, Model, data, base_path, _run):
         if lr_scheduler != None:
             lr_scheduler.step(val_loss)
             keep_training = lr_scheduler.limit_cnt > -1 # -1 -> stop training
+            lr_scheduler.limit_cnt = self.limit # Needed if we run ex. more than once!
 
         log("Epoch: {}. Loss: {}. Val Loss: {}".format(e, tr_loss, val_loss))
 
