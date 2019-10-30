@@ -76,6 +76,7 @@ config["config.lr_scheduler"] = CustomReduceLROnPlateau(
         limit=config["config.lr_scheduler_limit"],
         verbose=config["config.lr_scheduler_verbose"]
         )
+config["config.lr_scheduler"] = None
 
 ### Regularization
 config["config.alpha_length"] = 0.05
