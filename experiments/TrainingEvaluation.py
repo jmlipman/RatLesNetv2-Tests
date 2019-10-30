@@ -162,8 +162,10 @@ def main(config, Model, data, base_path, _run):
         # Reduce learning rate if needed, and stop if limit is reached.
         if lr_scheduler != None:
             lr_scheduler.step(val_loss)
-            keep_training = lr_scheduler.limit_cnt > -1 # -1 -> stop training
-            lr_scheduler.limit_cnt = lr_scheduler.limit # Needed if we run ex. more than once!
+            #keep_training = lr_scheduler.limit_cnt > -1 # -1 -> stop training
+            if lr_scheduler.limit_cnt < 0:
+                keep_training = False
+                lr_scheduler.limit_cnt = lr_scheduler.limit # Needed if we run ex. more than once!
 
         log("Epoch: {}. Loss: {}. Val Loss: {}".format(e, tr_loss, val_loss))
 
