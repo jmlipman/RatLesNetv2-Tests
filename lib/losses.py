@@ -17,7 +17,7 @@ def CrossEntropyLoss(y_pred, y_true, weights=1):
         `y_pred`: predictions after softmax, BCWHD.
         `y_true`: labels one-hot encoded, BCWHD.
         `weights`: weights tensor, BWHD.
-       
+
     """
     ce = torch.sum(y_true * torch.log(y_pred + 1e-15), axis=1)
     return -torch.mean(ce*weights)
@@ -105,4 +105,3 @@ def Dice_LengthRegularization(y_pred, y_true, alpha):
 
 
 # Boundary loss
-# Length

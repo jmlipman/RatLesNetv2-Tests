@@ -47,7 +47,7 @@ config["config.classes"] = 2
 
 ### Model architecture
 config["config.growth_rate"] = 18
-config["config.concat"] = 3
+config["config.concat"] = 2
 config["config.first_filters"] = 12
 config["config.skip_connection"] = "concat" #sum, False
 config["config.dim_reduc"] = False
@@ -111,30 +111,34 @@ all_configs = [1e-6] # Run 5 times
 
 for _ in all_configs:
 
-    ci += 1
-    # Name of the experiment and path
-    exp_name = "CE_WeightClass_Distance"
+    for __ in range(5):
+        ci += 1
+        # Name of the experiment and path
+        exp_name = "CE"
+        if not config["config.lr_scheduler"] is None:
+            exp_name += "_ES"
 
-    try:
-        print("Trying: "+exp_name)
-        experiment_path = BASE_PATH + exp_name + "/"
-        ex.observers = [FileStorageObserver.create(experiment_path)]
-        config["base_path"] = experiment_path
+        try:
+            print("Trying: "+exp_name)
+            experiment_path = BASE_PATH + exp_name + "/"
+            ex.observers = [FileStorageObserver.create(experiment_path)]
+            config["base_path"] = experiment_path
 
-        # Testing paramenters
-        #config["config.lr"] = lr
-        #config["config.growth_rate"] = fsize
-        #config["config.concat"] = concat
-        #config["config.skip_connection"] = skip
-        #config["config.lambda_length"] = l2
+            # Testing paramenters
+            #config["config.lr"] = lr
+            #config["config.growth_rate"] = fsize
+            #config["config.concat"] = concat
+            #config["config.skip_connection"] = skip
+            #config["config.lambda_length"] = l2
 
-        ex.run(config_updates=config)
+            ex.run(config_updates=config)
 
-        show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
-        print(show_text)
-    except KeyboardInterrupt:
-        raise
-    except:
-        raise
+            show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
+            print(show_text)
+        except KeyboardInterrupt:
+            raise
+        except:
+            Twitter().tweet("Error " + str(time.time()))
+            raise
 
-#Twitter().tweet("Done " + str(time.time()))
+Twitter().tweet("Done " + str(time.time()))

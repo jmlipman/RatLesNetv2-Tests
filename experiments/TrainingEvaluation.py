@@ -68,7 +68,7 @@ def main(config, Model, data, base_path, _run):
         f.write(">> Model's state dict:\n") # Important for debugging
         for param_tensor in model.state_dict():
             f.write(param_tensor + "\t" + str(model.state_dict()[param_tensor].size()) + "\n")
-        
+
         f.write("\n>> Optimizer's state dict:\n") # Important for reproducibility
         for var_name in opt.state_dict():
             f.write(var_name + "\t" + str(opt.state_dict()[var_name]) + "\n")
@@ -117,11 +117,11 @@ def main(config, Model, data, base_path, _run):
         writer.add_scalar("tr_loss", tr_loss, e)
         writer.add_scalar("tr_islands", tr_islands, e)
         writer.close()
-        
 
         log("Validation")
         val_loss = 0
         val_islands = 0
+        val_dice = 0 # Dice coef in the lesions
         val_i = 0
         model.eval()
         with torch.no_grad():
@@ -135,6 +135,8 @@ def main(config, Model, data, base_path, _run):
                     val_loss_tmp = loss_fn(out, Y, W)
                 val_loss += val_loss_tmp
                 val_islands += islands_num(out.cpu())
+                val_dice += dice_coef(out.cpu().numpy(), Y.cpu().numpy())[0][1] # Lesion dice
+                # Calculate Dice coef during validation
 
                 if id_ in config["save_validation"]:
                     name = id_ + "_" + str(e)
@@ -148,11 +150,13 @@ def main(config, Model, data, base_path, _run):
 
         val_loss /= len(val_data)
         val_islands /= len(val_data)
+        val_dice /= len(val_data)
 
         # Get summaries to add to tensorboard
         writer = SummaryWriter(tb_path)
         writer.add_scalar("val_loss", val_loss, e)
         writer.add_scalar("val_islands", val_islands, e)
+        writer.add_scalar("val_dice", val_dice, e)
         writer.close()
 
         # Reduce learning rate if needed, and stop if limit is reached.
