@@ -40,7 +40,7 @@ config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
-config["config.loss_fn"] = CrossEntropyLoss
+config["config.loss_fn"] = CrossEntropy_LengthRegularization
 config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
@@ -55,7 +55,7 @@ config["config.dim_reduc"] = False
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
 config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
-config["config.save_npy"] = False
+config["config.save_npy"] = True
 config["config.save_prediction"] = False # Save preds on Testing section.
 
 ### Loading Weights
@@ -79,7 +79,7 @@ config["config.lr_scheduler"] = CustomReduceLROnPlateau(
 config["config.lr_scheduler"] = None
 
 ### Regularization
-config["config.alpha_length"] = 0.05
+config["config.alpha_length"] = 0.000001
 
 
 ####### Not migrated confs:
@@ -115,7 +115,7 @@ for _ in all_configs:
     for __ in range(5):
         ci += 1
         # Name of the experiment and path
-        exp_name = "CE"
+        exp_name = "CE_length"+str(config["config.alpha_length"])
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 
@@ -139,7 +139,7 @@ for _ in all_configs:
         except KeyboardInterrupt:
             raise
         except:
-            Twitter().tweet("Error " + str(time.time()))
+            #Twitter().tweet("Error " + str(time.time()))
             raise
 
-Twitter().tweet("Done " + str(time.time()))
+#Twitter().tweet("Done " + str(time.time()))

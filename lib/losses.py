@@ -9,7 +9,7 @@ from lib.utils import np2cuda
 
 #def CrossEntropyLoss(y_pred, y_true):
 #    return -torch.mean(y_true * torch.log(y_pred + 1e-15))
-def CrossEntropyLoss(y_pred, y_true, weights=1):
+def CrossEntropyLoss(y_pred, y_true, config, weights=1):
     """Regular Cross Entropy loss function.
        It is possible to use weights with the shape of BWHD (no channel).
 
@@ -23,7 +23,7 @@ def CrossEntropyLoss(y_pred, y_true, weights=1):
     return -torch.mean(ce*weights)
 
 
-def DiceLoss(y_pred, y_true):
+def DiceLoss(y_pred, y_true, config):
     """Binary Dice loss function.
 
        Args:
@@ -34,16 +34,16 @@ def DiceLoss(y_pred, y_true):
     denom = torch.sum(torch.pow(y_pred, 2) + torch.pow(y_true, 2), axis=(1,2,3,4))
     return (1 - torch.sum(num / (denom + 1e-6)))
 
-def CrossEntropyDiceLoss(y_pred, y_true):
+def CrossEntropyDiceLoss(y_pred, y_true, config):
     """Cross Entropy combined with Dice Loss.
 
        Args:
         `y_pred`: predictions after softmax, BCWHD.
         `y_true`: labels one-hot encoded, BCWHD.
     """
-    return CrossEntropyLoss(y_pred, y_true) + DiceLoss(y_pred, y_true)
+    return CrossEntropyLoss(y_pred, y_true, config) + DiceLoss(y_pred, y_true, config)
 
-def WeightedCrossEntropy_ClassBalance(y_pred, y_true, weights):
+def WeightedCrossEntropy_ClassBalance(y_pred, y_true, config, weights):
     """Weighted Cross Entropy in which the weights are based on the
        number of voxels that belong to a certain label.
        For instance: [0, 0, 1, 0, 0, 1]
@@ -70,9 +70,9 @@ def WeightedCrossEntropy_ClassBalance(y_pred, y_true, weights):
 
     #ce = torch.sum(y_true * torch.log(y_pred + 1e-15), axis=1)
     #return -torch.mean(ce*weights)
-    return CrossEntropyLoss(y_pred, y_true, weights)
+    return CrossEntropyLoss(y_pred, y_true, config, weights)
 
-def WeightedCrossEntropy_DistanceMap(y_pred, y_true, weights):
+def WeightedCrossEntropy_DistanceMap(y_pred, y_true, config, weights):
     """Weighted Cross Entropy in which the weights are based on the
        the distance to the boundaries of the labels.
        It gives less importance/weight to the voxels close to the boundaries
@@ -85,23 +85,23 @@ def WeightedCrossEntropy_DistanceMap(y_pred, y_true, weights):
     """
     #ce = torch.sum(y_true * torch.log(y_pred + 1e-15), axis=1)
     #return -torch.mean(ce*weights)
-    return CrossEntropyLoss(y_pred, y_true, weights)
+    return CrossEntropyLoss(y_pred, y_true, config, weights)
 
-def LengthRegularization(y_pred):
+def _LengthRegularization(y_pred):
     x_ = y_pred[:,:,1:,:,:] - y_pred[:,:,:-1,:,:]
     y_ = y_pred[:,:,:,1:,:] - y_pred[:,:,:,:-1,:]
     z_ = y_pred[:,:,:,:,1:] - y_pred[:,:,:,:,:-1]
-    dx_ = tf.abs(x_[:,:,:,:-1,:-1])
-    dy_ = tf.abs(y_[:,:,:-1,:,:-1])
-    dz_ = tf.abs(z_[:,:,:-1,:-1,:])
-    length = tf.reduce_sum(dx_ + dy_ + dz_)
+    dx_ = torch.abs(x_[:,:,:,:-1,:-1])
+    dy_ = torch.abs(y_[:,:,:-1,:,:-1])
+    dz_ = torch.abs(z_[:,:,:-1,:-1,:])
+    length = torch.sum(dx_ + dy_ + dz_)
     return length
 
-def CrossEntropy_LengthRegularization(y_pred, y_true, alpha):
-    return CrossEntropyLoss(y_pred, y_true) + alpha*LengthRegularization(y_pred)
+def CrossEntropy_LengthRegularization(y_pred, y_true, config):
+    return CrossEntropyLoss(y_pred, y_true, config) + config["alpha_length"]*_LengthRegularization(y_pred)
 
-def Dice_LengthRegularization(y_pred, y_true, alpha):
-    return DiceLoss(y_pred, y_true) + alpha*LengthRegularization(y_pred)
+def Dice_LengthRegularization(y_pred, y_true, config):
+    return DiceLoss(y_pred, y_true, config) + config["alpha_length"]*_LengthRegularization(y_pred)
 
 
 # Boundary loss

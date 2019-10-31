@@ -95,9 +95,9 @@ def main(config, Model, data, base_path, _run):
 
             out = model(X)
             if W is None:
-                tr_loss_tmp = loss_fn(out, Y)
+                tr_loss_tmp = loss_fn(out, Y, config)
             else:
-                tr_loss_tmp = loss_fn(out, Y, W)
+                tr_loss_tmp = loss_fn(out, Y, config, W)
             tr_loss += tr_loss_tmp
             tr_islands += islands_num(out.detach().cpu())
 
@@ -130,9 +130,9 @@ def main(config, Model, data, base_path, _run):
 
                 out = model(X)
                 if W is None:
-                    val_loss_tmp = loss_fn(out, Y)
+                    val_loss_tmp = loss_fn(out, Y, config)
                 else:
-                    val_loss_tmp = loss_fn(out, Y, W)
+                    val_loss_tmp = loss_fn(out, Y, config, W)
                 val_loss += val_loss_tmp
                 val_islands += islands_num(out.cpu())
                 val_dice += dice_coef(out.cpu().numpy(), Y.cpu().numpy())[0][1] # Lesion dice
