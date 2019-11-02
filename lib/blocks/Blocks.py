@@ -88,3 +88,56 @@ class RatLesNet_DenseBlock(nn.Module):
     def __str__(self):
         return "RatLesNet_DenseBlock"
 
+class RatLesNet_DenseBlock_133(nn.Module):
+
+    def __init__(self, in_filters, concat, growth_rate, dim_reduc=False,
+                 nonlinearity=torch.nn.functional.relu):
+        super(RatLesNet_DenseBlock, self).__init__()
+        self.concat = concat
+        self.dim_reduc = dim_reduc
+        self.act = nonlinearity
+        self.convs = []
+
+        for i in range(self.concat-1):
+            # Add every 3D convolution to self.convs
+            self.convs.append(nn.Sequential(
+                Conv3d(growth_rate*i+in_filters, growth_rate, (1,3,3),
+                    stride=1, padding=1),
+                nonlinearity
+                ))
+        i += 1
+        self.convs.append(nn.Sequential(
+            Conv3d(growth_rate*i+in_filters, growth_rate, (3,3,3),
+                stride=1, padding=1),
+            nonlinearity
+        self.convs = nn.ModuleList(self.convs)
+
+        # Output shape of the current DenseBLock
+        self.out_shape = growth_rate*i+in_filters
+
+        # Reduce dimensions at the end of the block if needed
+        if self.dim_reduc:
+            self.reduc_conv = nn.Sequential(
+                Conv3d(growth_rate*(i+1)+in_filters, in_channels, 3,
+                    stride=1, padding=1),
+                nonlinearity
+            )
+            self.out_shape = in_filters
+
+    def forward(self, x):
+
+        inputs = [x]
+        for i in range(self.concat):
+            #x = self.act(self.convs[i](x)) #Good one
+            x = self.convs[i](x)
+            inputs.append(x)
+            x = torch.cat(inputs, dim=1)
+
+        if self.dim_reduc:
+            x = self.act(self.reduc_conv(x))
+
+        return x
+
+    def __str__(self):
+        return "RatLesNet_DenseBlock_133"
+

@@ -16,6 +16,8 @@ from lib.lr_scheduler import CustomReduceLROnPlateau
 # This seems to not be a good idea when the input sizes change during the training.
 torch.backends.cudnn.benchmark = True
 
+pc_name = os.uname()[1]
+
 ### TODO
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
@@ -56,7 +58,7 @@ config["config.dim_reduc"] = False
 # The following brains will be saved during validation. If not wanted, empty list.
 if pc_name == "FUJ":
     config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
-elif pc_name == "nmrcs3"
+elif pc_name == "nmrcs3":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
 else:
     raise Exception("Unknown PC")
