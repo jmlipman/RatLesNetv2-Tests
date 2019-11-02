@@ -110,6 +110,7 @@ class RatLesNet_DenseBlock_133(nn.Module):
             Conv3d(growth_rate*i+in_filters, growth_rate, (3,3,3),
                 stride=1, padding=1),
             nonlinearity
+            ))
         self.convs = nn.ModuleList(self.convs)
 
         # Output shape of the current DenseBLock
