@@ -140,7 +140,7 @@ def main(config, Model, data, base_path, _run):
 
                 if id_ in config["save_validation"]:
                     name = id_ + "_" + str(e)
-                    out = np.moveaxis(np.reshape(out.cpu().numpy(), (2,256,256,18)), 0, -1)
+                    out = np.moveaxis(np.moveaxis(np.reshape(out.cpu().numpy(), (2,18,256,256)), 1, -1), 0, -1)
                     if config["save_npy"]:
                         np.save(config["base_path"] + "val_evol/" + name, out)
                     out = np.argmax(out, axis=-1)
@@ -192,7 +192,7 @@ def main(config, Model, data, base_path, _run):
             Y = Y.cpu().numpy() # NBWHC
 
             if config["save_prediction"]:
-                _out = np.argmax(np.reshape(out, (2,256,256,18)), axis=0)
+                _out = np.argmax(np.moveaxis(np.reshape(out, (2,18,256,256)), 1, -1), axis=0)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + ".nii.gz")
 
             dice_res = list(dice_coef(out, Y)[0])

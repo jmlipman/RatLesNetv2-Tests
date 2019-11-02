@@ -33,7 +33,7 @@ config = {}
 config["data"] = Data
 config["Model"] = RatLesNet
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700 # Originally 700
+config["config.epochs"] = 5 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -54,7 +54,12 @@ config["config.dim_reduc"] = False
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
-config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43", "02NOV2016_24h_5", "02NOV2016_2h_6"]
+if pc_name == "FUJ":
+    config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
+elif pc_name == "nmrcs3"
+    config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+else:
+    raise Exception("Unknown PC")
 config["config.save_npy"] = False
 config["config.save_prediction"] = False # Save preds on Testing section.
 
@@ -112,10 +117,10 @@ all_configs = [1e-6] # Run 5 times
 
 for _ in all_configs:
 
-    for __ in range(5):
+    for __ in range(1):
         ci += 1
         # Name of the experiment and path
-        exp_name = "CE_length"+str(config["config.alpha_length"])
+        exp_name = "fixed_CE_length"+str(config["config.alpha_length"])
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

@@ -127,7 +127,6 @@ class CRAllDataset(torch.utils.data.Dataset):
             Y[1,:,:,:] = 0
         Y = np.expand_dims(Y, 0) #BCWHD
 
-        print(Y.shape, X.shape)
         W = self._computeWeight(Y)
 
         return np2cuda(X), np2cuda(Y), id_, W
