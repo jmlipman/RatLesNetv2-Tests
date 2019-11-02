@@ -113,11 +113,13 @@ class CRAllDataset(torch.utils.data.Dataset):
         id_ = study + "_" + timepoint + "_" + subject
 
         X = nib.load(target+"scan.nii.gz").get_data()
-        X = np.moveaxis(X, -1, 0)
+        X = np.moveaxis(X, -1, 0) # Move channels to the beginning
+        X = np.moveaxis(X, -1, 1) # Move depth after channels
         X = np.expand_dims(X, axis=0)
 
         if os.path.isfile(target+"scan"+self.ext+".nii.gz"):
             Y = nib.load(target+"scan"+self.ext+".nii.gz").get_data()
+            Y = np.moveaxis(Y, -1, 0) # Move depth to the beginning
             Y = np.stack([1.0*(Y==j) for j in range(2)], axis=0)
         else:
             #Y = np.ones(list(X.shape[2:]))
@@ -125,6 +127,7 @@ class CRAllDataset(torch.utils.data.Dataset):
             Y[1,:,:,:] = 0
         Y = np.expand_dims(Y, 0) #BCWHD
 
+        print(Y.shape, X.shape)
         W = self._computeWeight(Y)
 
         return np2cuda(X), np2cuda(Y), id_, W

@@ -55,7 +55,7 @@ config["config.dim_reduc"] = False
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
 config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43", "02NOV2016_24h_5", "02NOV2016_2h_6"]
-config["config.save_npy"] = True
+config["config.save_npy"] = False
 config["config.save_prediction"] = False # Save preds on Testing section.
 
 ### Loading Weights
