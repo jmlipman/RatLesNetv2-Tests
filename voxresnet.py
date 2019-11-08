@@ -4,6 +4,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
 from lib.models.RatLesNet import RatLesNet
+from lib.models.VoxResNet import VoxResNet
 from lib.data.CRAllDataset import CRAllDataset as Data
 import itertools, os
 import time, torch
@@ -45,7 +46,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "results_VoxResNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -56,7 +57,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
 config["data"] = Data
-config["Model"] = RatLesNet
+config["Model"] = VoxResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
 config["config.epochs"] = 400 # Originally 700
@@ -66,7 +67,7 @@ config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
-config["config.loss_fn"] = CrossEntropyLoss
+config["config.loss_fn"] = VoxResNet_CE
 config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
@@ -139,14 +140,14 @@ config["config.early_stopping_thr"] = 999
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [1]
+all_configs = [1e-3, 1e-4, 1e-5] # Run 5 times
 
-for _ in all_configs:
+for lr in all_configs:
 
-    for __ in range(3):
+    for __ in range(1):
         ci += 1
         # Name of the experiment and path
-        exp_name = "CE"
+        exp_name = "lr"+str(lr)
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 
@@ -157,7 +158,7 @@ for _ in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            #config["config.lr"] = lr
+            config["config.lr"] = lr
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip

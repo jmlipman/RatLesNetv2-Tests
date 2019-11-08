@@ -8,6 +8,7 @@ from tensorboardX import SummaryWriter
 from lib.utils import log
 from lib.metrics import *
 import json
+from lib.models.VoxResNet import VoxResNet
 
 ex = Experiment("TrainingEvaluation")
 
@@ -19,12 +20,13 @@ def main(config, Model, data, base_path, _run):
     config["base_path"] = base_path
 
     # Data
-    tr_data = data("train", loss=config["loss_fn"])
-    val_data = data("validation", loss=config["loss_fn"])
+    tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
+    val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
 
     # Model
     model = Model(config)
-    model.cuda()
+    #model.cuda()
+    model.to(config["device"])
 
     # Weight initialization
     def weight_init(m):
@@ -32,6 +34,7 @@ def main(config, Model, data, base_path, _run):
             config["initW"](m.weight)
             config["initB"](m.bias)
     model.apply(weight_init)
+
 
     # Save graph
     X, _, _, _ = tr_data[0]
@@ -46,6 +49,7 @@ def main(config, Model, data, base_path, _run):
         model(X)
     with open(base_path + "profile", "w") as f:
         f.write(str(prof))
+
 
     # Create folder for saving the model and validation results
     if len(config["save_validation"]) > 0:
@@ -99,6 +103,8 @@ def main(config, Model, data, base_path, _run):
             else:
                 tr_loss_tmp = loss_fn(out, Y, config, W)
             tr_loss += tr_loss_tmp
+            if Model is VoxResNet:
+                out = out[0]
             tr_islands += islands_num(out.detach().cpu())
 
             # Optimization
@@ -134,6 +140,8 @@ def main(config, Model, data, base_path, _run):
                 else:
                     val_loss_tmp = loss_fn(out, Y, config, W)
                 val_loss += val_loss_tmp
+                if Model is VoxResNet:
+                    out = out[0]
                 val_islands += islands_num(out.cpu())
                 val_dice += dice_coef(out.cpu().numpy(), Y.cpu().numpy())[0][1] # Lesion dice
                 # Calculate Dice coef during validation
@@ -177,7 +185,7 @@ def main(config, Model, data, base_path, _run):
         e += 1
 
     log("Testing")
-    test_data = data("test", loss=config["loss_fn"])
+    test_data = data("test", loss=config["loss_fn"], dev=config["device"])
     if config["save_prediction"]:
         os.makedirs(config["base_path"] + "preds")
 
@@ -188,6 +196,8 @@ def main(config, Model, data, base_path, _run):
         for test_i in range(len(test_data)):
             X, Y, id_, _ = test_data[test_i]
             out = model(X)
+            if Model is VoxResNet:
+                out = out[0]
             out = out.cpu().numpy()
             Y = Y.cpu().numpy() # NBWHC
 

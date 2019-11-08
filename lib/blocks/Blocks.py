@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from torch.nn import Conv3d
+from torch.nn import Conv3d, BatchNorm3d, ReLU
 import random, time
 import numpy as np
 
@@ -39,6 +39,25 @@ class Bottleneck3d(nn.Module):
 
     def __str__(self):
         return "Bottleneck3d"
+
+class VoxResNet_ResBlock(nn.Module):
+    def __init__(self):
+        super(VoxResNet_ResBlock, self).__init__()
+
+        self.seq = nn.Sequential(
+                BatchNorm3d(64),
+                ReLU(),
+                Conv3d(64, 64, (1,3,3), padding=(0,1,1)),
+                BatchNorm3d(64),
+                ReLU(),
+                Conv3d(64, 64, (3,3,3), padding=1)
+        )
+
+    def forward(self, x):
+        return x + self.seq(x)
+
+    def __str__(self):
+        return "VoxResNet_ResBlock"
 
 class RatLesNet_DenseBlock(nn.Module):
 
@@ -92,22 +111,22 @@ class RatLesNet_DenseBlock_133(nn.Module):
 
     def __init__(self, in_filters, concat, growth_rate, dim_reduc=False,
                  nonlinearity=torch.nn.functional.relu):
-        super(RatLesNet_DenseBlock, self).__init__()
+        super(RatLesNet_DenseBlock_133, self).__init__()
         self.concat = concat
         self.dim_reduc = dim_reduc
         self.act = nonlinearity
         self.convs = []
 
-        for i in range(self.concat-1):
+        for i in range(self.concat):
             # Add every 3D convolution to self.convs
             self.convs.append(nn.Sequential(
                 Conv3d(growth_rate*i+in_filters, growth_rate, (1,3,3),
-                    stride=1, padding=1),
+                    stride=1, padding=(0,1,1)),
                 nonlinearity
                 ))
         i += 1
         self.convs.append(nn.Sequential(
-            Conv3d(growth_rate*i+in_filters, growth_rate, (3,3,3),
+            Conv3d(growth_rate*i+in_filters, growth_rate, 3,
                 stride=1, padding=1),
             nonlinearity
             ))

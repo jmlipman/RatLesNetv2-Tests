@@ -7,7 +7,7 @@ from lib.losses import *
 
 class CRAllDataset(torch.utils.data.Dataset):
 
-    def __init__(self, split, loss=None, seg="miguel"):
+    def __init__(self, split, loss=None, dev=None, seg="miguel"):
         """This class will retrieve the whole data set that we have.
            For training/validation it is using 02NOV2016 study.
            For testing it is using the remaining studies.
@@ -18,10 +18,12 @@ class CRAllDataset(torch.utils.data.Dataset):
             `split`: "train", "validation", "test".
             `loss`: loss function used in the code. This is used to compute
              the weights because different loss functions use diff. weights.
+            `dev`: device where the data will be brought (cuda/cpu)
             `seg`: Which segmentation is retrieving.
         """
         self.split = split
         self.loss = loss
+        self.dev = dev
         # Split between training and validation from 02NOV2016
         prop = 0.8 
 
@@ -129,7 +131,7 @@ class CRAllDataset(torch.utils.data.Dataset):
 
         W = self._computeWeight(Y)
 
-        return np2cuda(X), np2cuda(Y), id_, W
+        return np2cuda(X, self.dev), np2cuda(Y, self.dev), id_, W
 
     def _computeWeight(self, Y):
         """This function computes the weights of a manual segmentation.
@@ -143,7 +145,7 @@ class CRAllDataset(torch.utils.data.Dataset):
         """
 
         if self.loss == WeightedCrossEntropy_DistanceMap:
-            return np2cuda(surfacedist(Y))
+            return np2cuda(surfacedist(Y), self.dev)
 
         elif self.loss == WeightedCrossEntropy_ClassBalance:
             # Number of voxels per image
@@ -155,7 +157,7 @@ class CRAllDataset(torch.utils.data.Dataset):
             weights_ = 1 - ones/numvox
             Y = np.moveaxis(np.moveaxis(Y, 0, -1), 0, -1)
             weights = np.moveaxis(np.moveaxis(Y*weights_, -1, 0), -1, 0)
-            return np2cuda(np.sum(weights, axis=1))
+            return np2cuda(np.sum(weights, axis=1), self.dev)
 
         else:
             return None

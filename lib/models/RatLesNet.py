@@ -15,8 +15,6 @@ class RatLesNet(nn.Module):
 
         self.conv1 = Bottleneck3d(1, config["first_filters"],
                                   nonlinearity=act)
-        # Weight init:
-        # https://stackoverflow.com/questions/49433936/how-to-initialize-weights-in-pytorch
         in_channels = config["first_filters"]
         self.dense1 = RatLesNet_DenseBlock(in_channels,
                                            config["concat"],

@@ -4,8 +4,8 @@ import numpy as np
 from scipy import ndimage
 from scipy.ndimage import distance_transform_edt as dist
 
-def np2cuda(inp):
-    return torch.from_numpy(inp.astype(np.float32)).cuda()
+def np2cuda(inp, dev):
+    return torch.from_numpy(inp.astype(np.float32)).to(dev)
 
 def log(text):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

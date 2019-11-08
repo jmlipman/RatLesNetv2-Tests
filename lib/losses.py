@@ -5,7 +5,14 @@
 
 import torch
 import numpy as np
-from lib.utils import np2cuda
+
+def VoxResNet_CE(out, y_true, config):
+    coefs = [1e-3, 1e-3, 1e-3, 1e-3]
+    loss = CrossEntropyLoss(out[0], y_true, config)
+    for i, c in enumerate(coefs):
+        loss += c * CrossEntropyLoss(out[i+1], y_true, config)
+
+    return loss
 
 #def CrossEntropyLoss(y_pred, y_true):
 #    return -torch.mean(y_true * torch.log(y_pred + 1e-15))
