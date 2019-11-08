@@ -60,7 +60,7 @@ config["data"] = Data
 config["Model"] = VoxResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 400 # Originally 700
+config["config.epochs"] = 300 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -140,14 +140,14 @@ config["config.early_stopping_thr"] = 999
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [1e-3, 1e-4, 1e-5] # Run 5 times
+all_configs = [1] # Run 5 times
 
 for lr in all_configs:
 
-    for __ in range(1):
+    for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "lr"+str(lr)
+        exp_name = "reg"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 
@@ -158,7 +158,7 @@ for lr in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["config.lr"] = lr
+            #config["config.lr"] = lr
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
