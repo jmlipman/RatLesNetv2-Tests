@@ -90,3 +90,80 @@ class RatLesNet(nn.Module):
         x = torch.functional.F.softmax(x, dim=1)
 
         return x
+
+class RatLesNet_ResNet(nn.Module):
+
+    def __init__(self, config):
+        super(RatLesNet_ResNet, self).__init__()
+
+        act = config["act"]
+
+        nfi = 26
+        self.conv1 = Bottleneck3d(1, nfi,
+                                  nonlinearity=act)
+        self.dense1 = RatLesNet_ResNetBlock(nfi,
+                                           config["concat"],
+                                           config["growth_rate"],
+                                           dim_reduc=config["dim_reduc"],
+                                           nonlinearity=act)
+        self.mp1 = nn.modules.MaxPool3d(2, return_indices=True, ceil_mode=True)
+
+        self.dense2 = RatLesNet_ResNetBlock(nfi,
+                                           config["concat"],
+                                           config["growth_rate"],
+                                           dim_reduc=config["dim_reduc"],
+                                           nonlinearity=act)
+
+
+        self.mp2 = nn.modules.MaxPool3d(2, return_indices=True, ceil_mode=True)
+
+        self.bottleneck1 = Bottleneck3d(nfi, nfi,
+                                        nonlinearity=act)
+
+        self.unpool1 = nn.modules.MaxUnpool3d(2)
+
+
+        self.dense3 = RatLesNet_ResNetBlock(nfi*2,
+                                           config["concat"],
+                                           config["growth_rate"],
+                                           dim_reduc=config["dim_reduc"],
+                                           nonlinearity=act)
+
+        self.bottleneck2 = Bottleneck3d(nfi*2, nfi,
+                                        nonlinearity=act)
+
+        self.unpool2 = nn.modules.MaxUnpool3d(2)
+
+        self.dense4 = RatLesNet_ResNetBlock(nfi*2,
+                                           config["concat"],
+                                           config["growth_rate"],
+                                           dim_reduc=config["dim_reduc"],
+                                           nonlinearity=act)
+
+        self.bottleneck3 = Bottleneck3d(nfi*2, 2)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        dense1_out = self.dense1(x)
+        dense1_size = dense1_out.size()
+
+
+        x, idx1 = self.mp1(dense1_out)
+        dense2_out = self.dense2(x)
+        dense2_size = dense2_out.size()
+
+        x, idx2 = self.mp2(dense2_out)
+        x = self.bottleneck1(x)
+
+        x = self.unpool1(x, idx2, output_size=dense2_size)
+        x = torch.cat([x, dense2_out], dim=1)
+        x = self.dense3(x)
+        x = self.bottleneck2(x)
+
+        x = self.unpool2(x, idx1, output_size=dense1_size)
+        x = torch.cat([x, dense1_out], dim=1)
+        x = self.dense4(x)
+        x = self.bottleneck3(x)
+        x = torch.functional.F.softmax(x, dim=1)
+
+        return x

@@ -43,11 +43,11 @@ class VoxResNet(nn.Module):
             VoxResNet_ResBlock()
             )
 
-        self.transposed1 = ConvTranspose3d(32, 2, 3, padding=1)
-        self.transposed2 = ConvTranspose3d(64, 2, 3, stride=2, padding=1,
-                output_padding=1)
-        self.transposed3 = ConvTranspose3d(64, 2, 3, stride=4, padding=1,
-                output_padding=(1,3,3))
+        #self.transposed1 = ConvTranspose3d(32, 2, 3, padding=1)
+        #self.transposed2 = ConvTranspose3d(64, 2, 3, stride=2, padding=1,
+        #        output_padding=1)
+        #self.transposed3 = ConvTranspose3d(64, 2, 3, stride=4, padding=1,
+        #        output_padding=(1,3,3))
         self.transposed4 = ConvTranspose3d(64, 2, 3, stride=8, padding=1,
                 output_padding=(1,7,7))
 
@@ -57,11 +57,12 @@ class VoxResNet(nn.Module):
         out3 = self.seq3(out2)
         out4 = self.seq4(out3)
 
-        x1 = self.transposed1(out1)
-        x2 = self.transposed2(out2)
-        x3 = self.transposed3(out3)
+        #x1 = self.transposed1(out1)
+        #x2 = self.transposed2(out2)
+        #x3 = self.transposed3(out3)
         x4 = self.transposed4(out4)
 
-        x = torch.functional.F.softmax(x1+x2+x3+x4, dim=1)
+        x = torch.functional.F.softmax(x4, dim=1)
 
-        return x, torch.functional.F.softmax(x1, dim=1), torch.functional.F.softmax(x2, dim=1), torch.functional.F.softmax(x3, dim=1), torch.functional.F.softmax(x4, dim=1)
+        #return x, torch.functional.F.softmax(x1, dim=1), torch.functional.F.softmax(x2, dim=1), torch.functional.F.softmax(x3, dim=1), torch.functional.F.softmax(x4, dim=1)
+        return x, torch.functional.F.softmax(x4, dim=1)

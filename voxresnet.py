@@ -147,7 +147,7 @@ for lr in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "reg"
+        exp_name = "VoxResNet_noC1C2C3"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

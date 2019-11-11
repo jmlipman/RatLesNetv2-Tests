@@ -107,6 +107,24 @@ class RatLesNet_DenseBlock(nn.Module):
     def __str__(self):
         return "RatLesNet_DenseBlock"
 
+class RatLesNet_ResNetBlock(nn.Module):
+    def __init__(self, in_filters, concat, growth_rate, dim_reduc=False,
+                 nonlinearity=torch.nn.functional.relu):
+        super(RatLesNet_ResNetBlock, self).__init__()
+
+        self.seq = nn.Sequential(
+                ReLU(),
+                Conv3d(in_filters, in_filters, 3, padding=1),
+                ReLU(),
+                Conv3d(in_filters, in_filters, 3, padding=1)
+            )
+
+    def forward(self, x):
+        return x + self.seq(x)
+
+    def __str__(self):
+        return "RatLesNet_ResNetBlock"
+
 class RatLesNet_DenseBlock_133(nn.Module):
 
     def __init__(self, in_filters, concat, growth_rate, dim_reduc=False,

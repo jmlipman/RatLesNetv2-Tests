@@ -3,7 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelIndividualTest import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
-from lib.models.RatLesNet import RatLesNet
+from lib.models.RatLesNet import *
 from lib.data.CRAllDataset import CRAllDataset as Data
 import itertools, os
 import time, torch
@@ -45,7 +45,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_RatLesNet/"
+BASE_PATH = "delete/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -56,7 +56,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
 config["data"] = Data
-config["Model"] = RatLesNet
+config["Model"] = RatLesNet_ResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
 config["config.epochs"] = 300 # Originally 700
