@@ -56,7 +56,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
 config["data"] = Data
-config["Model"] = RatLesNet_ResNet
+config["Model"] = RatLesNet_3L
 config["config.device"] = device
 config["config.lr"] = 1e-4
 config["config.epochs"] = 300 # Originally 700
