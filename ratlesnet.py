@@ -56,7 +56,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
 config["data"] = Data
-config["Model"] = RatLesNet
+config["Model"] = RatLesNet_ResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
 config["config.epochs"] = 300 # Originally 700
@@ -72,7 +72,7 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.growth_rate"] = 23
+config["config.growth_rate"] = 18
 config["config.concat"] = 2
 config["config.first_filters"] = 12
 config["config.skip_connection"] = "concat" #sum, False
@@ -146,7 +146,7 @@ for _ in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "RatLesNet_noSkip_sameparams"
+        exp_name = "RatLesNet_ResNet_noSkip"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

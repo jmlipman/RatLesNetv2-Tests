@@ -40,7 +40,7 @@ class RatLesNet(nn.Module):
 
         self.unpool1 = nn.modules.MaxUnpool3d(2)
 
-        #in_channels *= 2 # because of the concat at the same level
+        in_channels *= 2 # because of the concat at the same level
         self.dense3 = RatLesNet_DenseBlock(in_channels,
                                            config["concat"],
                                            config["growth_rate"],
@@ -54,9 +54,8 @@ class RatLesNet(nn.Module):
                                         nonlinearity=act)
 
         self.unpool2 = nn.modules.MaxUnpool3d(2)
-        #in_channels = out_channels + config["first_filters"] + \
-        #    config["concat"]*config["growth_rate"]
-        in_channels = out_channels
+        in_channels = out_channels + config["first_filters"] + \
+            config["concat"]*config["growth_rate"]
         self.dense4 = RatLesNet_DenseBlock(in_channels,
                                            config["concat"],
                                            config["growth_rate"],
@@ -100,7 +99,7 @@ class RatLesNet_ResNet(nn.Module):
         act = config["act"]
 
         # For total equal params: nfi=26
-        nfi = 26
+        nfi = 41
         self.conv1 = Bottleneck3d(1, nfi
                                   )
         self.dense1 = RatLesNet_ResNetBlock(nfi,
@@ -125,24 +124,24 @@ class RatLesNet_ResNet(nn.Module):
         self.unpool1 = nn.modules.MaxUnpool3d(2)
 
 
-        self.dense3 = RatLesNet_ResNetBlock(nfi*2,
+        self.dense3 = RatLesNet_ResNetBlock(nfi,
                                            config["concat"],
                                            config["growth_rate"],
                                            dim_reduc=config["dim_reduc"],
                                            nonlinearity=act)
 
-        self.bottleneck2 = Bottleneck3d(nfi*2, nfi,
+        self.bottleneck2 = Bottleneck3d(nfi, nfi,
                                         )
 
         self.unpool2 = nn.modules.MaxUnpool3d(2)
 
-        self.dense4 = RatLesNet_ResNetBlock(nfi*2,
+        self.dense4 = RatLesNet_ResNetBlock(nfi,
                                            config["concat"],
                                            config["growth_rate"],
                                            dim_reduc=config["dim_reduc"],
                                            nonlinearity=act)
 
-        self.bottleneck3 = Bottleneck3d(nfi*2, 2)
+        self.bottleneck3 = Bottleneck3d(nfi, 2)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -158,12 +157,12 @@ class RatLesNet_ResNet(nn.Module):
         x = self.bottleneck1(x)
 
         x = self.unpool1(x, idx2, output_size=dense2_size)
-        x = torch.cat([x, dense2_out], dim=1)
+        #x = torch.cat([x, dense2_out], dim=1)
         x = self.dense3(x)
         x = self.bottleneck2(x)
 
         x = self.unpool2(x, idx1, output_size=dense1_size)
-        x = torch.cat([x, dense1_out], dim=1)
+        #x = torch.cat([x, dense1_out], dim=1)
         x = self.dense4(x)
         x = self.bottleneck3(x)
         x = torch.functional.F.softmax(x, dim=1)
