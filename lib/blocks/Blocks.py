@@ -113,11 +113,11 @@ class RatLesNet_ResNetBlock(nn.Module):
         super(RatLesNet_ResNetBlock, self).__init__()
 
         self.seq = nn.Sequential(
-                BatchNorm3d(in_filters),
                 ReLU(),
+                BatchNorm3d(in_filters),
                 Conv3d(in_filters, in_filters, 3, padding=1),
-                BatchNorm3d(in_filters),
                 ReLU(),
+                BatchNorm3d(in_filters),
                 Conv3d(in_filters, in_filters, 3, padding=1)
             )
 

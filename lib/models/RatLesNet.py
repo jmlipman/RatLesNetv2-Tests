@@ -100,8 +100,8 @@ class RatLesNet_ResNet(nn.Module):
 
         # For total equal params: nfi=26
         nfi = 26
-        self.conv1 = Bottleneck3d(1, nfi,
-                                  nonlinearity=act)
+        self.conv1 = Bottleneck3d(1, nfi
+                                  )
         self.dense1 = RatLesNet_ResNetBlock(nfi,
                                            config["concat"],
                                            config["growth_rate"],
@@ -118,8 +118,8 @@ class RatLesNet_ResNet(nn.Module):
 
         self.mp2 = nn.modules.MaxPool3d(2, return_indices=True, ceil_mode=True)
 
-        self.bottleneck1 = Bottleneck3d(nfi, nfi,
-                                        nonlinearity=act)
+        self.bottleneck1 = Bottleneck3d(nfi, nfi
+                                        )
 
         self.unpool1 = nn.modules.MaxUnpool3d(2)
 
@@ -130,8 +130,8 @@ class RatLesNet_ResNet(nn.Module):
                                            dim_reduc=config["dim_reduc"],
                                            nonlinearity=act)
 
-        self.bottleneck2 = Bottleneck3d(nfi*2, nfi,
-                                        nonlinearity=act)
+        self.bottleneck2 = Bottleneck3d(nfi*2, nfi
+                                        )
 
         self.unpool2 = nn.modules.MaxUnpool3d(2)
 
