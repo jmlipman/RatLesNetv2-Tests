@@ -72,7 +72,7 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.growth_rate"] = 18
+config["config.growth_rate"] = 23
 config["config.concat"] = 2
 config["config.first_filters"] = 12
 config["config.skip_connection"] = "concat" #sum, False
@@ -146,7 +146,7 @@ for _ in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "RatLesNet_noSkip"
+        exp_name = "RatLesNet_noSkip_sameparams"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 
