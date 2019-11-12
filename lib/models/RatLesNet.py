@@ -98,9 +98,8 @@ class RatLesNet_ResNet(nn.Module):
 
         act = config["act"]
 
-        # For total equal params: nfi=nfi2=26
-        # For similar params in enc+dec, nfi=28, nfi2=26
-        nfi, nfi2 = 28, 26
+        # For total equal params: nfi=26
+        nfi = 26
         self.conv1 = Bottleneck3d(1, nfi,
                                   nonlinearity=act)
         self.dense1 = RatLesNet_ResNetBlock(nfi,
