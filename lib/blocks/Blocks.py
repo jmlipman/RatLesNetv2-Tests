@@ -21,6 +21,7 @@ class ConcatChannels(nn.Module):
         return torch.cat(l, dim=1)
 """
 
+
 class Bottleneck3d(nn.Module):
     def __init__(self, in_channels, out_channels, nonlinearity=None):
         super(Bottleneck3d, self).__init__()
@@ -39,6 +40,26 @@ class Bottleneck3d(nn.Module):
 
     def __str__(self):
         return "Bottleneck3d"
+
+class RatLesNet_ResNetBlock(nn.Module):
+    def __init__(self, in_filters, concat, growth_rate, dim_reduc=False,
+                 nonlinearity=torch.nn.functional.relu):
+        super(RatLesNet_ResNetBlock, self).__init__()
+
+        self.seq = nn.Sequential(
+                ReLU(),
+                BatchNorm3d(in_filters),
+                Conv3d(in_filters, in_filters, 3, padding=1),
+                ReLU(),
+                BatchNorm3d(in_filters),
+                Conv3d(in_filters, in_filters, 3, padding=1)
+            )
+
+    def forward(self, x):
+        return x + self.seq(x)
+
+    def __str__(self):
+        return "RatLesNet_ResNetBlock"
 
 class VoxResNet_ResBlock(nn.Module):
     def __init__(self):
@@ -106,26 +127,6 @@ class RatLesNet_DenseBlock(nn.Module):
 
     def __str__(self):
         return "RatLesNet_DenseBlock"
-
-class RatLesNet_ResNetBlock(nn.Module):
-    def __init__(self, in_filters, concat, growth_rate, dim_reduc=False,
-                 nonlinearity=torch.nn.functional.relu):
-        super(RatLesNet_ResNetBlock, self).__init__()
-
-        self.seq = nn.Sequential(
-                ReLU(),
-                BatchNorm3d(in_filters),
-                Conv3d(in_filters, in_filters, 3, padding=1),
-                ReLU(),
-                BatchNorm3d(in_filters),
-                Conv3d(in_filters, in_filters, 3, padding=1)
-            )
-
-    def forward(self, x):
-        return x + self.seq(x)
-
-    def __str__(self):
-        return "RatLesNet_ResNetBlock"
 
 class RatLesNet_DenseBlock_133(nn.Module):
 

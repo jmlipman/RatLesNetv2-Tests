@@ -46,7 +46,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_VoxResNet/"
+BASE_PATH = "delete/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -147,7 +147,7 @@ for lr in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "VoxResNet_2L"
+        exp_name = "VoxResNet_2L_sameparams"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

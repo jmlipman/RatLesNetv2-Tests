@@ -7,7 +7,7 @@ import torch
 import numpy as np
 
 def VoxResNet_CE(out, y_true, config):
-    coefs = [1e-3, 1e-3, 1e-3]
+    coefs = [1e-3, 1e-3, 1e-3, 1e-3]
     loss = CrossEntropyLoss(out[0], y_true, config)
     for i, c in enumerate(coefs):
         loss += c * CrossEntropyLoss(out[i+1], y_true, config)

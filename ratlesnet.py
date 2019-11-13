@@ -3,7 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelIndividualTest import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
-from lib.models.RatLesNet import *
+from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as Data
 import itertools, os
 import time, torch
@@ -45,7 +45,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "delete/"
+BASE_PATH = "results_RatLesNetv2/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -56,7 +56,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
 config["data"] = Data
-config["Model"] = RatLesNet_ResNet
+config["Model"] = RatLesNet_v2
 config["config.device"] = device
 config["config.lr"] = 1e-4
 config["config.epochs"] = 300 # Originally 700
@@ -72,9 +72,9 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.growth_rate"] = 18
+config["config.growth_rate"] = 12
 config["config.concat"] = 2
-config["config.first_filters"] = 12
+config["config.first_filters"] = 32
 config["config.skip_connection"] = "concat" #sum, False
 config["config.dim_reduc"] = False
 
@@ -146,7 +146,7 @@ for _ in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "RatLesNet_ResNet_noSkip"
+        exp_name = "base"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

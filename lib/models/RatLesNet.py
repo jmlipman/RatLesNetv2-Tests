@@ -5,7 +5,6 @@ import random, time
 import numpy as np
 from lib.blocks.Blocks import *
 
-
 class RatLesNet(nn.Module):
 
     def __init__(self, config):
