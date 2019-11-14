@@ -56,7 +56,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
 config["data"] = Data
-config["Model"] = RatLesNet_v2
+config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
 config["config.epochs"] = 300 # Originally 700
@@ -66,7 +66,7 @@ config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
-config["config.loss_fn"] = CrossEntropyLoss
+config["config.loss_fn"] = WeightedCrossEntropy_DistanceMap
 config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
@@ -146,7 +146,7 @@ for _ in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "base"
+        exp_name = "base_weightedloss_02nov2016"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

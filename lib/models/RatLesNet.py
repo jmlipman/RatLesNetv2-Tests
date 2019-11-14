@@ -78,12 +78,12 @@ class RatLesNet(nn.Module):
         x = self.bottleneck1(x)
 
         x = self.unpool1(x, idx2, output_size=dense2_size)
-        #x = torch.cat([x, dense2_out], dim=1)
+        x = torch.cat([x, dense2_out], dim=1)
         x = self.dense3(x)
         x = self.bottleneck2(x)
 
         x = self.unpool2(x, idx1, output_size=dense1_size)
-        #x = torch.cat([x, dense1_out], dim=1)
+        x = torch.cat([x, dense1_out], dim=1)
         x = self.dense4(x)
         x = self.bottleneck3(x)
         x = torch.functional.F.softmax(x, dim=1)
