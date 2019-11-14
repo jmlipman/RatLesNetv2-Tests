@@ -4,7 +4,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
 from lib.models.RatLesNetv2 import *
-from lib.data.CRAllDataset import CRAllDataset as Data
+from lib.data.CRMixedDataset import CRMixedDataset as Data
 import itertools, os
 import time, torch
 import numpy as np
@@ -146,7 +146,7 @@ for _ in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "base_weightedloss_02nov2016"
+        exp_name = "base_weightedloss_mixed"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 
