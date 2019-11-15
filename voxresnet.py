@@ -3,9 +3,8 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelIndividualTest import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
-from lib.models.RatLesNet import RatLesNet
 from lib.models.VoxResNet import VoxResNet
-from lib.data.CRAllDataset import CRAllDataset as Data
+from lib.data.CRMixedDataset import CRMixedDataset as Data
 import itertools, os
 import time, torch
 import numpy as np
@@ -46,7 +45,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "delete/"
+BASE_PATH = "results_VoxResNet/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -60,7 +59,7 @@ config["data"] = Data
 config["Model"] = VoxResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 300 # Originally 700
+config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -147,7 +146,7 @@ for lr in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "VoxResNet_2L_sameparams"
+        exp_name = "VoxResNet_700ep_mixed"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

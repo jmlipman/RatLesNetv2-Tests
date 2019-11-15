@@ -18,24 +18,27 @@ class RatLesNet_v2_v2(nn.Module):
         self.conv1 = Conv3d(1, config["first_filters"], 1)
 
         self.block1 = RatLesNetv2_ResNet(nfi)
+        self.gate1 = RatLesNetv2_SE1(nfi, int(nfi/8))
         self.mp1 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
         self.block2 = RatLesNetv2_ResNet(nfi)
+        self.gate2 = RatLesNetv2_SE1(nfi, int(nfi/8))
         self.mp2 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
         self.block3 = RatLesNetv2_ResNet(nfi)
+        self.gate3 = RatLesNetv2_SE1(nfi, int(nfi/8))
         self.mp3 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
         self.bottleneck1 = RatLesNetv2_Bottleneck(nfi, nfi)
-        self.block4 = RatLesNetv2_ResNet(nfi2)
+        self.block4 = RatLesNetv2_ResNet(nfi)
 
-        self.bottleneck2 = RatLesNetv2_Bottleneck(nfi2, nfi)
-        self.block5 = RatLesNetv2_ResNet(nfi2)
+        self.bottleneck2 = RatLesNetv2_Bottleneck(nfi, nfi)
+        self.block5 = RatLesNetv2_ResNet(nfi)
 
-        self.bottleneck3 = RatLesNetv2_Bottleneck(nfi2, nfi)
-        self.block6 = RatLesNetv2_ResNet(nfi2)
+        self.bottleneck3 = RatLesNetv2_Bottleneck(nfi, nfi)
+        self.block6 = RatLesNetv2_ResNet(nfi)
 
-        self.bottleneck4 = RatLesNetv2_Bottleneck(nfi2, 2)
+        self.bottleneck4 = RatLesNetv2_Bottleneck(nfi, 2)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -55,19 +58,19 @@ class RatLesNet_v2_v2(nn.Module):
         x = self.bottleneck1(x)
 
         x = interpolate(x, block3_size[2:], mode="trilinear")
-        x = torch.cat([x, block3_out], dim=1)
+        x = x * self.gate3(block3_out)
 
         x = self.block4(x)
         x = self.bottleneck2(x)
 
         x = interpolate(x, block2_size[2:], mode="trilinear")
-        x = torch.cat([x, block2_out], dim=1)
+        x = x * self.gate2(block2_out)
 
         x = self.block5(x)
         x = self.bottleneck3(x)
 
         x = interpolate(x, block1_size[2:], mode="trilinear")
-        x = torch.cat([x, block1_out], dim=1)
+        x = x * self.gate1(block1_out)
 
         x = self.block6(x)
         x = self.bottleneck4(x)
