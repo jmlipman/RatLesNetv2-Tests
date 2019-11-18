@@ -40,12 +40,23 @@ class VoxResNet(nn.Module):
         self.seq4 = nn.Sequential(
             BatchNorm3d(64),
             ReLU(),
-            Conv3d(64, 64, 3, padding=1, stride=1),
-            MaxPool3d(2, padding=(1,0,0)),
+            Conv3d(64, 64, 3, padding=1, stride=2),
+            #MaxPool3d(2, padding=(1,0,0)),
             VoxResNet_ResBlock(),
             VoxResNet_ResBlock()
             )
 
+        """
+        # For Leiden dataset, 16 slices
+        self.transposed1 = ConvTranspose3d(32, 2, 3, padding=1)
+        self.transposed2 = ConvTranspose3d(64, 2, 3, stride=2, padding=1,
+                output_padding=1)
+        self.transposed3 = ConvTranspose3d(64, 2, 3, stride=4, padding=1,
+                output_padding=3)
+        self.transposed4 = ConvTranspose3d(64, 2, 3, stride=8, padding=1,
+                output_padding=7)
+        """
+        # For CR dataset, 18 slices
         self.transposed1 = ConvTranspose3d(32, 2, 3, padding=1)
         self.transposed2 = ConvTranspose3d(64, 2, 3, stride=2, padding=1,
                 output_padding=1)

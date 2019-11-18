@@ -213,7 +213,14 @@ def main(config, Model, data, base_path, _run):
             Y = Y.cpu().numpy() # NBWHC
 
             if config["save_prediction"]:
-                _out = np.argmax(np.moveaxis(np.reshape(out, (2,18,256,256)), 1, -1), axis=0)
+                #_out = np.argmax(np.moveaxis(np.reshape(out, (2,18,256,256)), 1, -1), axis=0)
+                # For Leiden dataset and Cologne-2
+                #_out = np.argmax(np.moveaxis(np.reshape(out, (2,10,128,128)), 1, -1), axis=0)
+                # For Cologne-1
+                try:
+                    _out = np.argmax(np.moveaxis(np.reshape(out, (2,12,196,196)), 1, -1), axis=0)
+                except:
+                    _out = np.argmax(np.moveaxis(np.reshape(out, (2,10,196,196)), 1, -1), axis=0)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + ".nii.gz")
 
             dice_res = list(dice_coef(out, Y)[0])

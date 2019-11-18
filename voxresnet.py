@@ -5,6 +5,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.lib.util import Twitter
 from lib.models.VoxResNet import VoxResNet
 from lib.data.CRMixedDataset import CRMixedDataset as Data
+#from lib.data.LeidenDataset import LeidenDataset as Data
 import itertools, os
 import time, torch
 import numpy as np
@@ -146,7 +147,7 @@ for lr in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "VoxResNet_700ep_mixed"
+        exp_name = "VoxResNet_mixed"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 
