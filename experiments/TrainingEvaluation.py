@@ -5,7 +5,7 @@ import numpy as np
 import nibabel as nib
 #from torch.utils.tensorboard import SummaryWriter
 from tensorboardX import SummaryWriter
-from lib.utils import log
+from lib.utils import log, removeSmallIslands
 from lib.metrics import *
 import json
 from lib.models.VoxResNet import VoxResNet
@@ -201,6 +201,7 @@ def main(config, Model, data, base_path, _run):
         os.makedirs(config["base_path"] + "preds")
 
     results = {}
+    results_post = {}
     model.eval()
     with torch.no_grad():
         # Assuming that batch_size is 1
@@ -213,14 +214,14 @@ def main(config, Model, data, base_path, _run):
             Y = Y.cpu().numpy() # NBWHC
 
             if config["save_prediction"]:
-                #_out = np.argmax(np.moveaxis(np.reshape(out, (2,18,256,256)), 1, -1), axis=0)
+                _out = np.argmax(np.moveaxis(np.reshape(out, (2,18,256,256)), 1, -1), axis=0)
                 # For Leiden dataset and Cologne-2
                 #_out = np.argmax(np.moveaxis(np.reshape(out, (2,10,128,128)), 1, -1), axis=0)
                 # For Cologne-1
-                try:
-                    _out = np.argmax(np.moveaxis(np.reshape(out, (2,12,196,196)), 1, -1), axis=0)
-                except:
-                    _out = np.argmax(np.moveaxis(np.reshape(out, (2,10,196,196)), 1, -1), axis=0)
+                #try:
+                #    _out = np.argmax(np.moveaxis(np.reshape(out, (2,12,196,196)), 1, -1), axis=0)
+                #except:
+                #    _out = np.argmax(np.moveaxis(np.reshape(out, (2,10,196,196)), 1, -1), axis=0)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + ".nii.gz")
 
             dice_res = list(dice_coef(out, Y)[0])
@@ -228,7 +229,20 @@ def main(config, Model, data, base_path, _run):
             islands_res = islands_num(out)[0]
             results[id_] = [dice_res, islands_res, haus_res]
 
+            if config["removeSmallIslands_thr"] != -1:
+                # Results after post-processing
+                out = removeSmallIslands(out, thr=config["removeSmallIslands_thr"])
+                dice_res_post = list(dice_coef(out, Y)[0])
+                haus_res_post = hausdorff_distance(out, Y)[0]
+                islands_res_post = islands_num(out)[0]
+                results_post[id_] = [dice_res_post, islands_res_post, haus_res_post]
+
     with open(config["base_path"] + "results.json", "w") as f:
         f.write(json.dumps(results))
+
+    if config["removeSmallIslands_thr"] != -1:
+        # Results after post-processing
+        with open(config["base_path"] + "results-post.json", "w") as f:
+            f.write(json.dumps(results_post))
 
     log("End")

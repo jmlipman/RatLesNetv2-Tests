@@ -2,9 +2,8 @@ from torch import nn
 from torch.nn import Conv3d, BatchNorm3d, ReLU, Sigmoid
 import numpy as np
 
-
 class RatLesNetv2_ResNet(nn.Module):
-    def __init__(self, in_filters):
+    def __init__(self, in_filters, conv_num=2):
         super(RatLesNetv2_ResNet, self).__init__()
 
         self.seq = nn.Sequential(
@@ -21,6 +20,30 @@ class RatLesNetv2_ResNet(nn.Module):
 
     def __str__(self):
         return "RatLesNetv2_ResNet"
+
+
+class RatLesNetv2_ResNet_v2(nn.Module):
+    def __init__(self, in_filters, conv_num):
+        super(RatLesNetv2_ResNet_v2, self).__init__()
+        self.conv_num = conv_num
+
+        self.seq = []
+        for i in range(conv_num):
+            self.seq.append(nn.Sequential(
+                    ReLU(),
+                    BatchNorm3d(in_filters),
+                    Conv3d(in_filters, in_filters, 3, padding=1),
+                ))
+        self.seq = nn.ModuleList(self.seq)
+
+    def forward(self, x):
+        for i in range(self.conv_num):
+            x = x + self.seq[i](x)
+
+        return x
+
+    def __str__(self):
+        return "RatLesNetv2_ResNet_v2"
 
 
 class RatLesNetv2_SE1(nn.Module):

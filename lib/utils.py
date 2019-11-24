@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from scipy import ndimage
 from scipy.ndimage import distance_transform_edt as dist
+from skimage.measure import label
 
 def np2cuda(inp, dev):
     return torch.from_numpy(inp.astype(np.float32)).to(dev)
@@ -51,3 +52,28 @@ def surfacedist(data):
 
     return distances
 
+def removeSmallIslands(masks, thr=20):
+    """20 is a good number, it gets rid of a lot of noise.
+       it corresponds to 87% of the small islands lower than 1000 voxels
+       26 gets rid of 90% of them.
+    """
+    for m in range(masks.shape[0]):
+        mask = np.argmax(masks[m], axis=0)
+        # Clean independent components from the background
+        labelMap = label(mask)
+        icc = len(np.unique(labelMap))
+
+        for i in range(icc): # From 1 because we skip the background
+            if np.sum(labelMap==i) < thr:
+                mask[labelMap==i] = 0
+
+        # Clean independent components from the lesion
+        labelMap = label(1-mask)
+        icc = len(np.unique(labelMap))
+        for i in range(icc): # From 1 because we skip the background
+            if np.sum(labelMap==i) < thr:
+                mask[labelMap==i] = 1
+
+        masks[m,:,:,:,:] = np.stack([mask==0, mask==1], axis=0)*1.0
+
+    return masks

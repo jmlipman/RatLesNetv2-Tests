@@ -4,7 +4,8 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
 from lib.models.RatLesNetv2 import *
-from lib.data.CRAllDataset import CRAllDataset as Data
+from lib.data.CRAllDataset import CRAllDataset as DataOrig
+from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
 import itertools, os
 import time, torch
 import numpy as np
@@ -45,7 +46,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_RatLesNetv2/"
+BASE_PATH = "results_ablation_RatLesNetv2/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -55,28 +56,25 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data = Data
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
-config["data"] = Data
+#config["data"] = Data
 config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700 # Originally 700
+config["config.epochs"] = 10 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
-#config["config.loss_fn"] = WeightedCrossEntropy_DistanceMap
+config["config.loss_fn"] = CrossEntropyDice
 config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.growth_rate"] = 18
-config["config.concat"] = 2
-config["config.first_filters"] = 32
-config["config.skip_connection"] = "concat" #sum, False
-config["config.dim_reduc"] = False
+config["config.first_filters"] = 32 #32 for RatLesNetv2, 21 for same params as RatLesNet
+config["config.block_convs"] = 2 # Number of convolutions within block
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
@@ -88,6 +86,7 @@ else:
     raise Exception("Unknown PC")
 config["config.save_npy"] = False
 config["config.save_prediction"] = False # Save preds on Testing section.
+config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights
 #config["config.model_state"] = "results_RatLesNet/CE_length_1e-06/2/model/model-78"
@@ -139,16 +138,22 @@ config["config.early_stopping_thr"] = 999
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
+#all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
+all_configs = [DataOrig, DataMixed]
 
-for _ in all_configs:
+for data in all_configs:
 
     for __ in range(3):
         ci += 1
+        # TODO Check the time for post-processing to see if it's feasible to leave it there
         # Name of the experiment and path
-        exp_name = "RatLesNetv2_orig_"+loss.__name__
+        exp_name = "RatLesNetv2_allconnected"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
+        if data == DataOrig:
+            exp_name += "_orig"
+        else:
+            exp_name += "_mixed"
 
         try:
             print("Trying: "+exp_name)
@@ -157,7 +162,7 @@ for _ in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["config.loss_fn"] = loss
+            config["data"] = data
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip

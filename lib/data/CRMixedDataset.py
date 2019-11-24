@@ -66,7 +66,7 @@ class CRMixedDataset(torch.utils.data.Dataset):
                 self.list.append(data[5])
         else:
             for data in brains.values():
-                self.list.extend(data[5:])
+                self.list.extend(data[6:])
             self.list += nolesions
 
         # Randomize

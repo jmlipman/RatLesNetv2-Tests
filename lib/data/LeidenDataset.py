@@ -60,7 +60,7 @@ class LeidenDataset(torch.utils.data.Dataset):
             elif split == "validation":
                 self.list += self.lesion[2:3]
             else:
-                self.list += self.lesion[2:]
+                self.list += self.lesion[3:]
 
         # Randomize
         random.shuffle(self.list)
