@@ -18,23 +18,23 @@ class RatLesNet_v2_v1(nn.Module):
 
         self.conv1 = Conv3d(1, config["first_filters"], 1)
 
-        self.block1 = RatLesNetv2_ResNet(nfi, conv_num)
+        self.block1 = RatLesNetv2_DenseNet(nfi)
         self.mp1 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
-        self.block2 = RatLesNetv2_ResNet(nfi, conv_num)
+        self.block2 = RatLesNetv2_DenseNet(nfi)
         self.mp2 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
-        self.block3 = RatLesNetv2_ResNet(nfi, conv_num)
+        self.block3 = RatLesNetv2_DenseNet(nfi)
         self.mp3 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
         self.bottleneck1 = RatLesNetv2_Bottleneck(nfi, nfi)
-        self.block4 = RatLesNetv2_ResNet(nfi2, conv_num)
+        self.block4 = RatLesNetv2_DenseNet(nfi2)
 
         self.bottleneck2 = RatLesNetv2_Bottleneck(nfi2, nfi)
-        self.block5 = RatLesNetv2_ResNet(nfi2, conv_num)
+        self.block5 = RatLesNetv2_DenseNet(nfi2)
 
         self.bottleneck3 = RatLesNetv2_Bottleneck(nfi2, nfi)
-        self.block6 = RatLesNetv2_ResNet(nfi2, conv_num)
+        self.block6 = RatLesNetv2_DenseNet(nfi2)
 
         self.bottleneck4 = RatLesNetv2_Bottleneck(nfi2, 2)
 

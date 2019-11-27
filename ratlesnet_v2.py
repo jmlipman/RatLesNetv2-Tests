@@ -71,8 +71,9 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.first_filters"] = 32 #32 for RatLesNetv2, 21 for same params as RatLesNet
+config["config.first_filters"] = 26 #32 for RatLesNetv2, 21 for same params as RatLesNet
 config["config.block_convs"] = 2 # Number of convolutions within block
+#config["config.growth_rate"] = 12 # Number of convolutions within block
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
@@ -137,14 +138,14 @@ config["config.early_stopping_thr"] = 999
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [0]
+all_configs = [DataOrig, DataMixed]
 
 for data in all_configs:
 
-    for __ in range(1):
+    for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "baseline"
+        exp_name = "densenet"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         if data == DataOrig:
@@ -159,7 +160,7 @@ for data in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            #config["data"] = data
+            config["data"] = data
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip

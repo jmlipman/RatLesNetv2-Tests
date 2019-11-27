@@ -1,6 +1,7 @@
 from torch import nn
 from torch.nn import Conv3d, BatchNorm3d, ReLU, Sigmoid
 import numpy as np
+import torch
 
 class RatLesNetv2_ResNet(nn.Module):
     def __init__(self, in_filters, conv_num=2):
@@ -37,6 +38,39 @@ class RatLesNetv2_Bottleneck(nn.Module):
     def __str__(self):
         return "RatLesNetv2_Bottleneck"
 
+
+class RatLesNetv2_DenseNet(nn.Module):
+    def __init__(self, in_filters):
+        super(RatLesNetv2_DenseNet, self).__init__()
+
+        self.seq = []
+        self.seq.append(nn.Sequential(
+                ReLU(),
+                BatchNorm3d(in_filters),
+                Conv3d(in_filters, in_filters, 3, padding=1),
+            ))
+        self.seq.append(nn.Sequential(
+                ReLU(),
+                BatchNorm3d(in_filters*2),
+                Conv3d(in_filters*2, in_filters, 3, padding=1),
+            ))
+        # Compression
+        self.seq.append(nn.Sequential(
+                BatchNorm3d(in_filters*3),
+                Conv3d(in_filters*3, in_filters, 1),
+            ))
+
+        self.seq = nn.ModuleList(self.seq)
+
+    def forward(self, x):
+        x1 = self.seq[0](x)
+        x2 = self.seq[1](torch.cat([x, x1], dim=1))
+        x3 = self.seq[2](torch.cat([x, x1, x2], dim=1))
+
+        return x3
+
+    def __str__(self):
+        return "RatLesNetv2_DenseNet"
 
 
 class RatLesNetv2_ResNet_v2(nn.Module):
