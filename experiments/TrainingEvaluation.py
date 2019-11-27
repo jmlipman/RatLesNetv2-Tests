@@ -108,15 +108,15 @@ def main(config, Model, data, base_path, _run):
         while tr_i < len(tr_data) and keep_training:
             X, Y, id_, W = tr_data[tr_i]
 
-            out = model(X)
+            output = model(X)
+            pred = output[0]
+            #print(activations.mean().cpu(), activations.std().cpu())
             if W is None:
-                tr_loss_tmp = loss_fn(out, Y, config)
+                tr_loss_tmp = loss_fn(pred, Y, config)
             else:
-                tr_loss_tmp = loss_fn(out, Y, config, W)
+                tr_loss_tmp = loss_fn(pred, Y, config, W)
             tr_loss += tr_loss_tmp
-            if Model is VoxResNet:
-                out = out[0]
-            tr_islands += islands_num(out.detach().cpu())
+            tr_islands += islands_num(pred.detach().cpu())
 
             # Optimization
             opt.zero_grad()
@@ -145,25 +145,24 @@ def main(config, Model, data, base_path, _run):
             while val_i < len(val_data) and keep_training:
                 X, Y, id_, W = val_data[val_i]
 
-                out = model(X)
+                output = model(X)
+                pred = output[0]
                 if W is None:
-                    val_loss_tmp = loss_fn(out, Y, config)
+                    val_loss_tmp = loss_fn(pred, Y, config)
                 else:
-                    val_loss_tmp = loss_fn(out, Y, config, W)
+                    val_loss_tmp = loss_fn(pred, Y, config, W)
                 val_loss += val_loss_tmp
-                if Model is VoxResNet:
-                    out = out[0]
-                val_islands += islands_num(out.cpu())
-                val_dice += dice_coef(out.cpu().numpy(), Y.cpu().numpy())[0][1] # Lesion dice
+                val_islands += islands_num(pred.cpu())
+                val_dice += dice_coef(pred.cpu().numpy(), Y.cpu().numpy())[0][1] # Lesion dice
                 # Calculate Dice coef during validation
 
                 if id_ in config["save_validation"]:
                     name = id_ + "_" + str(e)
-                    out = np.moveaxis(np.moveaxis(np.reshape(out.cpu().numpy(), (2,18,256,256)), 1, -1), 0, -1)
+                    pred = np.moveaxis(np.moveaxis(np.reshape(pred.cpu().numpy(), (2,18,256,256)), 1, -1), 0, -1)
                     if config["save_npy"]:
-                        np.save(config["base_path"] + "val_evol/" + name, out)
-                    out = np.argmax(out, axis=-1)
-                    nib.save(nib.Nifti1Image(out, np.eye(4)), config["base_path"] + "val_evol/" + name + ".nii.gz")
+                        np.save(config["base_path"] + "val_evol/" + name, pred)
+                    pred = np.argmax(pred, axis=-1)
+                    nib.save(nib.Nifti1Image(pred, np.eye(4)), config["base_path"] + "val_evol/" + name + ".nii.gz")
 
                 val_i += 1
 
@@ -207,14 +206,12 @@ def main(config, Model, data, base_path, _run):
         # Assuming that batch_size is 1
         for test_i in range(len(test_data)):
             X, Y, id_, _ = test_data[test_i]
-            out = model(X)
-            if Model is VoxResNet:
-                out = out[0]
-            out = out.cpu().numpy()
+            output = model(X)
+            pred = output[0].cpu().numpy()
             Y = Y.cpu().numpy() # NBWHC
 
             if config["save_prediction"]:
-                _out = np.argmax(np.moveaxis(np.reshape(out, (2,18,256,256)), 1, -1), axis=0)
+                _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
                 # For Leiden dataset and Cologne-2
                 #_out = np.argmax(np.moveaxis(np.reshape(out, (2,10,128,128)), 1, -1), axis=0)
                 # For Cologne-1
@@ -224,17 +221,17 @@ def main(config, Model, data, base_path, _run):
                 #    _out = np.argmax(np.moveaxis(np.reshape(out, (2,10,196,196)), 1, -1), axis=0)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + ".nii.gz")
 
-            dice_res = list(dice_coef(out, Y)[0])
-            haus_res = hausdorff_distance(out, Y)[0]
-            islands_res = islands_num(out)[0]
+            dice_res = list(dice_coef(pred, Y)[0])
+            haus_res = hausdorff_distance(pred, Y)[0]
+            islands_res = islands_num(pred)[0]
             results[id_] = [dice_res, islands_res, haus_res]
 
             if config["removeSmallIslands_thr"] != -1:
                 # Results after post-processing
-                out = removeSmallIslands(out, thr=config["removeSmallIslands_thr"])
-                dice_res_post = list(dice_coef(out, Y)[0])
-                haus_res_post = hausdorff_distance(out, Y)[0]
-                islands_res_post = islands_num(out)[0]
+                pred = removeSmallIslands(pred, thr=config["removeSmallIslands_thr"])
+                dice_res_post = list(dice_coef(pred, Y)[0])
+                haus_res_post = hausdorff_distance(pred, Y)[0]
+                islands_res_post = islands_num(pred)[0]
                 results_post[id_] = [dice_res_post, islands_res_post, haus_res_post]
 
     with open(config["base_path"] + "results.json", "w") as f:

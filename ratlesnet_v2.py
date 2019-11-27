@@ -1,8 +1,6 @@
 from sacred.observers import FileStorageObserver
 from experiments.TrainingEvaluation import ex
-#from experiments.VoxelIndividualTest import ex
-#from experiments.VoxelInfluenceTest import ex
-#from experiments.lib.util import Twitter
+#from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
@@ -56,18 +54,18 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data = Data
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
-#config["data"] = Data
+config["data"] = DataOrig
 config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 10 # Originally 700
+config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
-config["config.loss_fn"] = CrossEntropyDice
+config["config.loss_fn"] = CrossEntropyDiceLoss
 config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
@@ -89,7 +87,7 @@ config["config.save_prediction"] = False # Save preds on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights
-#config["config.model_state"] = "results_RatLesNet/CE_length_1e-06/2/model/model-78"
+#config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/1-connectivity-loss/vox_CEDice_orig/3/model/model-699"
 config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
@@ -139,15 +137,14 @@ config["config.early_stopping_thr"] = 999
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [DataOrig, DataMixed]
+all_configs = [0]
 
 for data in all_configs:
 
-    for __ in range(3):
+    for __ in range(1):
         ci += 1
-        # TODO Check the time for post-processing to see if it's feasible to leave it there
         # Name of the experiment and path
-        exp_name = "RatLesNetv2_allconnected"
+        exp_name = "baseline"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         if data == DataOrig:
@@ -162,7 +159,7 @@ for data in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["data"] = data
+            #config["data"] = data
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip

@@ -21,6 +21,23 @@ class RatLesNetv2_ResNet(nn.Module):
     def __str__(self):
         return "RatLesNetv2_ResNet"
 
+class RatLesNetv2_Bottleneck(nn.Module):
+    def __init__(self, in_filters, out_filters):
+        super(RatLesNetv2_Bottleneck, self).__init__()
+
+        self.seq = nn.Sequential(
+                ReLU(),
+                BatchNorm3d(in_filters),
+                Conv3d(in_filters, out_filters, 1)
+            )
+
+    def forward(self, x):
+        return self.seq(x)
+
+    def __str__(self):
+        return "RatLesNetv2_Bottleneck"
+
+
 
 class RatLesNetv2_ResNet_v2(nn.Module):
     def __init__(self, in_filters, conv_num):
@@ -63,22 +80,5 @@ class RatLesNetv2_SE1(nn.Module):
 
     def __str__(self):
         return "RatLesNetv2_SE1"
-
-
-class RatLesNetv2_Bottleneck(nn.Module):
-    def __init__(self, in_filters, out_filters):
-        super(RatLesNetv2_Bottleneck, self).__init__()
-
-        self.seq = nn.Sequential(
-                ReLU(),
-                BatchNorm3d(in_filters),
-                Conv3d(in_filters, out_filters, 1)
-            )
-
-    def forward(self, x):
-        return self.seq(x)
-
-    def __str__(self):
-        return "RatLesNetv2_Bottleneck"
 
 
