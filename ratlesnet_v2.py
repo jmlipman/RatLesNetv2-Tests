@@ -71,9 +71,8 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.first_filters"] = 26 #32 for RatLesNetv2, 21 for same params as RatLesNet
+config["config.first_filters"] = 39 #32 for RatLesNetv2, 21 for same params as RatLesNet
 config["config.block_convs"] = 2 # Number of convolutions within block
-#config["config.growth_rate"] = 12 # Number of convolutions within block
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
@@ -145,7 +144,7 @@ for data in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "densenet"
+        exp_name = "level2_sameparams"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         if data == DataOrig:

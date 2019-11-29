@@ -1,1 +1,7 @@
 Check which training is more stable, CE or CEDice
+
+CE is better in orig
+CEDice is better in mixed
+CE is smoother.
+CEDice needs more space in the paper.a
+Probably CE is enough because the function is smooth due to BN "How does BN help optimization?" paper.

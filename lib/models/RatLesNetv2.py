@@ -18,23 +18,24 @@ class RatLesNet_v2_v1(nn.Module):
 
         self.conv1 = Conv3d(1, config["first_filters"], 1)
 
-        self.block1 = RatLesNetv2_DenseNet(nfi)
+        self.block1 = RatLesNetv2_ResNet(nfi, conv_num)
         self.mp1 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
-        self.block2 = RatLesNetv2_DenseNet(nfi)
+        self.block2 = RatLesNetv2_ResNet(nfi, conv_num)
         self.mp2 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
-        self.block3 = RatLesNetv2_DenseNet(nfi)
-        self.mp3 = nn.modules.MaxPool3d(2, ceil_mode=True)
+        #self.block3 = RatLesNetv2_ResNet(nfi, conv_num)
+        #self.mp3 = nn.modules.MaxPool3d(2, ceil_mode=True)
 
-        self.bottleneck1 = RatLesNetv2_Bottleneck(nfi, nfi)
-        self.block4 = RatLesNetv2_DenseNet(nfi2)
+        #self.bottleneck1 = RatLesNetv2_Bottleneck(nfi, nfi)
+        #self.block4 = RatLesNetv2_ResNet(nfi2, conv_num)
 
-        self.bottleneck2 = RatLesNetv2_Bottleneck(nfi2, nfi)
-        self.block5 = RatLesNetv2_DenseNet(nfi2)
+        #self.bottleneck2 = RatLesNetv2_Bottleneck(nfi2, nfi)
+        self.bottleneck2 = RatLesNetv2_Bottleneck(nfi, nfi)
+        self.block5 = RatLesNetv2_ResNet(nfi2, conv_num)
 
         self.bottleneck3 = RatLesNetv2_Bottleneck(nfi2, nfi)
-        self.block6 = RatLesNetv2_DenseNet(nfi2)
+        self.block6 = RatLesNetv2_ResNet(nfi2, conv_num)
 
         self.bottleneck4 = RatLesNetv2_Bottleneck(nfi2, 2)
 
@@ -48,17 +49,18 @@ class RatLesNet_v2_v1(nn.Module):
         block2_size = block2_out.size()
 
         x = self.mp2(block2_out)
-        block3_out = self.block3(x)
-        block3_size = block3_out.size()
+        #block3_out = self.block3(x)
+        #block3_size = block3_out.size()
 
-        x = self.mp3(block3_out)
-        b1 = self.bottleneck1(x)
+        #x = self.mp3(block3_out)
+        #b1 = self.bottleneck1(x)
 
-        x = interpolate(b1, block3_size[2:], mode="trilinear")
-        x = torch.cat([x, block3_out], dim=1)
+        #x = interpolate(b1, block3_size[2:], mode="trilinear")
+        #x = torch.cat([x, block3_out], dim=1)
 
-        block4_out = self.block4(x)
-        b2 = self.bottleneck2(block4_out)
+        #block4_out = self.block4(x)
+        #b2 = self.bottleneck2(block4_out)
+        b2 = self.bottleneck2(x)
 
         x = interpolate(b2, block2_size[2:], mode="trilinear")
         x = torch.cat([x, block2_out], dim=1)
@@ -74,7 +76,9 @@ class RatLesNet_v2_v1(nn.Module):
 
         softed = torch.functional.F.softmax(b4, dim=1)
 
-        return softed, b4, b1, b2, b3, block2_out, block3_out, block4_out, block5_out, block6_out
+        # Must be a tuple
+        return (softed, )
+        #return softed, b4, b1, b2, b3, block2_out, block3_out, block4_out, block5_out, block6_out
 
 class RatLesNet_v2_v2(nn.Module):
 
