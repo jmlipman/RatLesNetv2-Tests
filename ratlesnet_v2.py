@@ -83,7 +83,7 @@ elif pc_name == "nmrcs3":
 elif pc_name == "sampo":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
 else:
-    raise Exception("Unknown PC")
+    raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
 config["config.save_prediction"] = False # Save preds on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
