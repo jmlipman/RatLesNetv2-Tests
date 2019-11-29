@@ -11,6 +11,8 @@ from lib.losses import *
 from lib.utils import he_normal
 from lib.lr_scheduler import CustomReduceLROnPlateau
 import argparse
+#from sacred import SETTINGS
+#SETTINGS.CONFIG.READ_ONLY_CONFIG = False
 
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
@@ -71,7 +73,7 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.first_filters"] = 39 #32 for RatLesNetv2, 21 for same params as RatLesNet
+config["config.first_filters"] = 32 #32 for RatLesNetv2, 21 for same params as RatLesNet
 config["config.block_convs"] = 2 # Number of convolutions within block
 
 ### Save validation results
@@ -133,20 +135,22 @@ config["config.early_stopping_thr"] = 999
 #concats = [1, 2, 3, 4, 5, 6]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
+datas = [DataOrig, DataMixed]
+widths = [16, 48]
 
-#params = [lrs, concats, skips, fsizes]
-#all_configs = list(itertools.product(*params))
+params = [datas, widths]
+all_configs = list(itertools.product(*params))
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [DataOrig, DataMixed]
+#all_configs = [DataOrig, DataMixed]
 
-for data in all_configs:
+for data, width in all_configs:
 
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "level2_sameparams"
+        exp_name = "baseline_width"+str(width)
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         if data == DataOrig:
@@ -162,6 +166,7 @@ for data in all_configs:
 
             # Testing paramenters
             config["data"] = data
+            config["config.first_filters"] = width
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
