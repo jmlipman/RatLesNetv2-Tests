@@ -80,7 +80,7 @@ if pc_name == "FUJ":
     config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
 elif pc_name == "nmrcs3":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
-elif pc_name == "sampo":
+elif pc_name == "sampo-tipagpu1":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
 else:
     raise Exception("Unknown PC: "+pc_name)

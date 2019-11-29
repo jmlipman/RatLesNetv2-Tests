@@ -36,7 +36,7 @@ class CRMixedDataset(torch.utils.data.Dataset):
         elif pc_name == "nmrcs3":
             # NMR-CS3
             self.PATH = "/home/miguelv/data/in/CR_DATA/"
-        elif pc_name == "sampo":
+        elif pc_name == "sampo-tipagpu1":
             # Sampo
             self.PATH = "/home/users/miguelv/data/in/CR_DATA/"
         else:
