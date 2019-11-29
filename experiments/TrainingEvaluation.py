@@ -144,7 +144,7 @@ def main(config, Model, data, base_path, _run):
         with torch.no_grad():
             while val_i < len(val_data) and keep_training:
                 X, Y, id_, W = val_data[val_i]
-                log(id_)
+
                 output = model(X)
                 pred = output[0]
                 if W is None:
