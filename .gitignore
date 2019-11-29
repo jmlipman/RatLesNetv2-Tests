@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+*.sbatch
 *__pycache__*
 results*
 tmp_res*
