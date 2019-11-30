@@ -4,7 +4,7 @@ from experiments.TrainingEvaluation import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
-from lib.data.CRMixedLargerDataset import CRMixedDataset as DataMixedLarger
+from lib.data.CRMixedLargerDataset import CRMixedLargerDataset as DataMixedLarger
 import itertools, os
 import time, torch
 import numpy as np
