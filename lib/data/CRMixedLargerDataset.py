@@ -66,7 +66,7 @@ class CRMixedLargerDataset(torch.utils.data.Dataset):
                 self.list.extend(data[:10])
         elif split == "validation":
             for data in brains.values():
-                self.list.append(data[10:12])
+                self.list.extend(data[10:12])
         else:
             for data in brains.values():
                 self.list.extend(data[12:])
