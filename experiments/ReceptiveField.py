@@ -44,12 +44,12 @@ def main(config, Model, data, base_path, _run):
             vol = np.copy(X)
             vol[0, 0, i, t2, t3] = mmin
             pred_min = model(np2cuda(vol, config["device"]))
-            pred_min = pred_min.cpu().numpy()
+            pred_min = pred_min[0].cpu().numpy()
 
             vol = np.copy(X)
             vol[0, 0, i, t2, t3] = mmax
             pred_max = model(np2cuda(vol, config["device"]))
-            pred_max = pred_max.cpu().numpy()
+            pred_max = pred_max[0].cpu().numpy()
 
             results[i] = np.max(np.abs(pred_min[0, :, t1, t2, t3] - pred_max[0, :, t1, t2, t3]))
         r = np.where(results!=0)[0][[0, -1]]
@@ -63,12 +63,12 @@ def main(config, Model, data, base_path, _run):
             vol = np.copy(X)
             vol[0, 0, t1, i, t3] = mmin
             pred_min = model(np2cuda(vol, config["device"]))
-            pred_min = pred_min.cpu().numpy()
+            pred_min = pred_min[0].cpu().numpy()
 
             vol = np.copy(X)
             vol[0, 0, t1, i, t3] = mmax
             pred_max = model(np2cuda(vol, config["device"]))
-            pred_max = pred_max.cpu().numpy()
+            pred_max = pred_max[0].cpu().numpy()
 
             results[i] = np.max(np.abs(pred_min[0, :, t1, t2, t3] - pred_max[0, :, t1, t2, t3]))
         r = np.where(results!=0)[0][[0, -1]]
@@ -82,12 +82,12 @@ def main(config, Model, data, base_path, _run):
             vol = np.copy(X)
             vol[0, 0, t1, t2, i] = mmin
             pred_min = model(np2cuda(vol, config["device"]))
-            pred_min = pred_min.cpu().numpy()
+            pred_min = pred_min[0].cpu().numpy()
 
             vol = np.copy(X)
             vol[0, 0, t1, t2, i] = mmax
             pred_max = model(np2cuda(vol, config["device"]))
-            pred_max = pred_max.cpu().numpy()
+            pred_max = pred_max[0].cpu().numpy()
 
             results[i] = np.max(np.abs(pred_min[0, :, t1, t2, t3] - pred_max[0, :, t1, t2, t3]))
         r = np.where(results!=0)[0][[0, -1]]

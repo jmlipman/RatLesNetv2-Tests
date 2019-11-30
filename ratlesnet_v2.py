@@ -1,9 +1,10 @@
 from sacred.observers import FileStorageObserver
 from experiments.TrainingEvaluation import ex
-#from experiments.ReceptiveField import ex
+#from experiments.GeneratePredictions import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
+from lib.data.CRMixedLargerDataset import CRMixedDataset as DataMixedLarger
 import itertools, os
 import time, torch
 import numpy as np
@@ -46,7 +47,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_ablation_RatLesNetv2/"
+BASE_PATH = "results_RatLesNetv2_largerMixedDataset/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -91,7 +92,7 @@ config["config.save_prediction"] = False # Save preds on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights
-#config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/1-connectivity-loss/vox_CEDice_orig/3/model/model-699"
+#config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/1-nmr/baseline_mixed/1/model/model-699"
 config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
@@ -135,28 +136,27 @@ config["config.early_stopping_thr"] = 999
 #concats = [1, 2, 3, 4, 5, 6]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
-datas = [DataOrig, DataMixed]
-widths = [16, 48]
+#datas = [DataOrig, DataMixed]
 
-params = [datas, widths]
-all_configs = list(itertools.product(*params))
+#params = [datas]
+#all_configs = list(itertools.product(*params))
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-#all_configs = [DataOrig, DataMixed]
+all_configs = [DataMixedLarger]
 
-for data, width in all_configs:
+for data in all_configs:
 
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "baseline_width"+str(width)
+        exp_name = "double"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         if data == DataOrig:
             exp_name += "_orig"
         else:
-            exp_name += "_mixed"
+            exp_name += ""
 
         try:
             print("Trying: "+exp_name)
@@ -166,7 +166,6 @@ for data, width in all_configs:
 
             # Testing paramenters
             config["data"] = data
-            config["config.first_filters"] = width
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
