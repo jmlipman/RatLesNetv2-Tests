@@ -20,8 +20,8 @@ def main(config, Model, data, base_path, _run):
     config["base_path"] = base_path
 
     # Data
-    tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
-    val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
+    tr_data = data("train", config["samples24h"], loss=config["loss_fn"], dev=config["device"])
+    val_data = data("validation", config["samples24h"], loss=config["loss_fn"], dev=config["device"])
 
     # Model
     model = Model(config)
@@ -195,9 +195,10 @@ def main(config, Model, data, base_path, _run):
         e += 1
 
     log("Testing")
-    test_data = data("test", loss=config["loss_fn"], dev=config["device"])
+    test_data = data("test", config["samples24h"], loss=config["loss_fn"], dev=config["device"])
     if config["save_prediction"]:
         os.makedirs(config["base_path"] + "preds")
+
 
     results = {}
     results_post = {}

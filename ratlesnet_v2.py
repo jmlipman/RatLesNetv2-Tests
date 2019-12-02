@@ -4,7 +4,7 @@ from experiments.TrainingEvaluation import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
-from lib.data.CRMixedLargerDataset import CRMixedLargerDataset as DataMixedLarger
+from lib.data.CR24hDataset import CR24hDataset as Data24h
 import itertools, os
 import time, torch
 import numpy as np
@@ -47,7 +47,7 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_RatLesNetv2_largerMixedDataset/"
+BASE_PATH = "results_24hvariability/"
 messageTwitter = "ratlesnet_"
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -57,11 +57,11 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data = Data
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
-config["data"] = DataOrig
+config["data"] = Data24h
 config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700 # Originally 700
+config["config.epochs"] = 500 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -143,20 +143,20 @@ config["config.early_stopping_thr"] = 999
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [DataMixedLarger]
+all_configs = [1,2,3,4,5,6]
 
-for data in all_configs:
+for ss in all_configs:
 
-    for __ in range(3):
+    for __ in range(5):
         ci += 1
         # Name of the experiment and path
-        exp_name = "double"
+        exp_name = "samples"+str(ss)
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
-        if data == DataOrig:
-            exp_name += "_orig"
-        else:
-            exp_name += ""
+        #if data == DataOrig:
+        #    exp_name += "_orig"
+        #else:
+        #    exp_name += ""
 
         try:
             print("Trying: "+exp_name)
@@ -165,11 +165,11 @@ for data in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["data"] = data
+            #config["data"] = data
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
-            #config["config.lambda_length"] = l2
+            config["config.samples24h"] = ss
 
             ex.run(config_updates=config)
 

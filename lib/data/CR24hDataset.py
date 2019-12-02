@@ -5,15 +5,16 @@ from lib.utils import np2cuda, surfacedist
 from lib.losses import *
 
 
-class CRMixedLargerDataset(torch.utils.data.Dataset):
+class CR24hDataset(torch.utils.data.Dataset):
 
-    def __init__(self, split, loss=None, dev=None):
+    def __init__(self, split, samples24h, loss=None, dev=None):
         """This class will have as a training set 5 lesion-containing scans
            of each time-point. Validation will be 1 lesion-containing scan per
            time-point. Test will be the rest
 
            Args:
             `split`: "train", "validation", "test".
+            `samples24h`: run id.
             `loss`: loss function used in the code. This is used to compute
              the weights because different loss functions use diff. weights.
             `dev`: device where the data will be brought (cuda/cpu)
@@ -52,7 +53,7 @@ class CRMixedLargerDataset(torch.utils.data.Dataset):
             self.lesion = []
             for root, subdirs, files in os.walk(self.PATH + study + "/"):
                 if "scan.nii.gz" in files:
-                    timepoint = root.split("/")[-2]
+                    timepoint = "_".join(root.split("/")[-3:-1])
                     if not timepoint in brains.keys():
                         brains[timepoint] = []
                     
@@ -61,15 +62,26 @@ class CRMixedLargerDataset(torch.utils.data.Dataset):
                     else:
                         nolesions.append(root + "/")
 
+        # We will use samples24h to determine the size of our training set
+        # The training set will consist only on 24h brains.
+        # If samples24h is 1, we will take 1 sample per 24h group (8)
+        # If samples24h is 2, 2 samples per 24h group (16) and so on until run_id=6 (included)
+        # Validation will consist of samples 7 and 8 of all 24h groups (16 in total)
+        # Test will consist on: all shams, all non-24h groups, 24h_groups after the 8th sample
         if split == "train":
-            for data in brains.values():
-                self.list.extend(data[:15])
+            for k in brains.keys():
+                if k.endswith("_24h"):
+                    self.list.extend(brains[k][:samples24h])
         elif split == "validation":
-            for data in brains.values():
-                self.list.extend(data[15:18])
+            for k in brains.keys():
+                if k.endswith("_24h"):
+                    self.list.extend(brains[k][6:8])
         else:
-            for data in brains.values():
-                self.list.extend(data[18:])
+            for k in brains.keys():
+                if k.endswith("_24h"):
+                    self.list.extend(brains[k][8:])
+                else:
+                    self.list.extend(brains[k])
             self.list += nolesions
 
         # Randomize
