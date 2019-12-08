@@ -6,17 +6,15 @@ import nibabel as nib
 #from torch.utils.tensorboard import SummaryWriter
 from tensorboardX import SummaryWriter
 from lib.utils import log, removeSmallIslands
-from lib.metrics import *
 import json
 from lib.models.VoxResNet import VoxResNet
-
 from lib.metric import Metric
 
 ex = Experiment("TrainingEvaluation")
 
 @ex.main
 def main(config, Model, data, base_path, _run):
-    log("Start TrainingEvaluation")
+    log("Start "+ex.get_experiment_info()["name"])
 
     base_path = base_path + str(_run._id) + "/"
     config["base_path"] = base_path

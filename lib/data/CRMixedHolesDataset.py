@@ -3,7 +3,7 @@ import nibabel as nib
 import numpy as np
 from lib.utils import np2cuda, surfacedist
 from lib.losses import *
-
+import scipy.ndimage
 
 class CRMixedHolesDataset(torch.utils.data.Dataset):
     """ This dataset will include holes in the ground truth.
@@ -31,8 +31,7 @@ class CRMixedHolesDataset(torch.utils.data.Dataset):
         self.dev = dev
         # Split between training and validation from 02NOV2016
         prop = 0.8 
-        self.holes = 0.3 # Percentage of holes
-        self.extended_area # Area outside the segmentation that will include islands
+        self.thr_holes = 0.1 # Percentage of holes
 
         # Depending on the computer the data is located in a different folder
         pc_name = os.uname()[1]
@@ -132,12 +131,12 @@ class CRMixedHolesDataset(torch.utils.data.Dataset):
 
         if os.path.isfile(target+"scan_miguel.nii.gz"):
             Y = nib.load(target+"scan_miguel.nii.gz").get_data()
-            # TODO Add function to make holes
+            Y = self._addHoles(Y) # ADDING HOLES
             Y = np.moveaxis(Y, -1, 0) # Move depth to the beginning
             Y = np.stack([1.0*(Y==j) for j in range(2)], axis=0)
         elif os.path.isfile(target+"scan_lesion.nii.gz"):
             Y = nib.load(target+"scan_lesion.nii.gz").get_data()
-            # TODO Add function to make holes
+            Y = self._addHoles(Y) # ADDING HOLES
             Y = np.moveaxis(Y, -1, 0) # Move depth to the beginning
             Y = np.stack([1.0*(Y==j) for j in range(2)], axis=0)
         else:
@@ -182,5 +181,19 @@ class CRMixedHolesDataset(torch.utils.data.Dataset):
 
         else:
             return None
+
+    def _addHoles(self, brain):
+        """ if thr is 0.3, 30% of the lesion voxels will become holes
+            and 30% of the surrounding non-lesion voxels will become islands.
+        """
+        dil_brain = np.zeros_like(brain)
+        for i in range(brain.shape[2]): # Iterate over the slices
+            if np.sum(brain[:,:,i]) != 0:
+                dil_brain[:,:,i] = scipy.ndimage.binary_dilation(brain[:,:,i], iterations=10)*1.0
+
+        dil_brain_area = dil_brain*(1-brain)
+        rand_mask = np.random.random(dil_brain.shape)
+
+        return brain*(rand_mask>self.thr_holes) + dil_brain_area*(rand_mask>(1-self.thr_holes))
 
 

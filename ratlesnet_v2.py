@@ -3,7 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
-from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
+from lib.data.CRMixedHolesDataset import CRMixedHolesDataset as DataMixedHoles
 from lib.data.CR24hDataset import CR24hDataset as Data24h
 import itertools, os
 import time, torch
@@ -50,11 +50,11 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataOrig
+config["data"] = DataMixedHoles
 config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 5 # Originally 700
+config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
@@ -129,7 +129,7 @@ config["config.early_stopping_thr"] = 999
 #config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
 #####################
 
-BASE_PATH += "delete/"
+BASE_PATH += "RatLesNetv2_holes/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
@@ -149,7 +149,7 @@ for ss in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "Miguel02NOV16_training"
+        exp_name = "thr0.1_mixed"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         #if data == DataOrig:

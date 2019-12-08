@@ -4,13 +4,13 @@ import numpy as np
 from datetime import datetime
 import os, time, torch
 from lib.utils import log, np2cuda
-from lib.metrics import *
+from lib.metric import Metric
 
 ex = Experiment("GeneratePredictions")
 
 @ex.main
 def main(config, Model, data, base_path, _run):
-    log("Generating predictions")
+    log("Start "+ex.get_experiment_info()["name"])
 
     base_path = base_path + str(_run._id) + "/"
     config["base_path"] = base_path
@@ -40,9 +40,10 @@ def main(config, Model, data, base_path, _run):
             Y = Y.cpu().numpy()
 
             # Stats
-            dice_res = list(dice_coef(pred, Y)[0])
-            haus_res = hausdorff_distance(pred, Y)[0]
-            islands_res = islands_num(pred)[0]
+            m = Metric(pred, Y)
+            dice_res = m.dice()[0]
+            haus_res = m.hausdorff()[0]
+            islands_res = m.islands()[0]
             stats.append("{}\t{}\t{}\t{}\n".format(id_, dice_res, haus_res, islands_res))
 
             _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)

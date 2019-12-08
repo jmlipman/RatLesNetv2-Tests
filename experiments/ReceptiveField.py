@@ -9,7 +9,7 @@ ex = Experiment("ReceptiveField")
 
 @ex.main
 def main(config, Model, data, base_path, _run):
-    log("Calculating the Receptive field")
+    log("Start "+ex.get_experiment_info()["name"])
 
     base_path = base_path + str(_run._id) + "/"
     config["base_path"] = base_path
