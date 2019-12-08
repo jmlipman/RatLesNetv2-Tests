@@ -5,26 +5,34 @@ from lib.utils import np2cuda, surfacedist
 from lib.losses import *
 
 
-class CRAllDataset(torch.utils.data.Dataset):
+class CRMixedHolesDataset(torch.utils.data.Dataset):
+    """ This dataset will include holes in the ground truth.
+        The idea is to imitate the ground truth of semi-automatic methods such as Mulder et al
+        and see to what extend RatLesNetv2 can tackle them.
+
+        We will draw a certain % of holes within the mask and 
+        we will add the same % of islands within a close region to the mask.
+    """
 
     def __init__(self, split, loss=None, dev=None):
-        """This class will retrieve the whole data set that we have.
-           For training/validation it is using 02NOV2016 study.
-           For testing it is using the remaining studies.
-           This script ensures that the training and validation sets
-           are balanced.
+        """This class will have as a training set 5 lesion-containing scans
+           of each time-point. Validation will be 1 lesion-containing scan per
+           time-point. Test will be the rest
 
            Args:
             `split`: "train", "validation", "test".
             `loss`: loss function used in the code. This is used to compute
              the weights because different loss functions use diff. weights.
             `dev`: device where the data will be brought (cuda/cpu)
+            `seg`: Which segmentation is retrieving.
         """
         self.split = split
         self.loss = loss
         self.dev = dev
         # Split between training and validation from 02NOV2016
         prop = 0.8 
+        self.holes = 0.3 # Percentage of holes
+        self.extended_area # Area outside the segmentation that will include islands
 
         # Depending on the computer the data is located in a different folder
         pc_name = os.uname()[1]
@@ -43,34 +51,35 @@ class CRAllDataset(torch.utils.data.Dataset):
         else:
             raise Exception("Unknown PC")
 
-        if split == "train" or split == "validation":
-            self.ext = "_miguel" # CHANGE!!
-            studies = ["02NOV2016/2h", "02NOV2016/24h"]
-        else:
-            self.ext = "_lesion"
-            studies = ["08JAN2015", "07MAY2015", "16JUN2015", "21JUL2015", "03AUG2015", "17NOV2015", "22DEC2015", "03MAY2016", "27JUN2017", "02OCT2017", "16NOV2017"]
+        studies = ["02NOV2016", "08JAN2015", "07MAY2015", "16JUN2015", "21JUL2015", "03AUG2015", "17NOV2015", "22DEC2015", "03MAY2016", "27JUN2017", "02OCT2017", "16NOV2017"]
 
         # Collecting the files in a list to read them when need it
         self.list = []
+        brains = {}
+        nolesions = []
         for study in studies:
             self.lesion = []
-            self.no_lesion = []
             for root, subdirs, files in os.walk(self.PATH + study + "/"):
                 if "scan.nii.gz" in files:
-                    if "scan"+self.ext+".nii.gz" in files:
-                        self.lesion.append(root + "/")
+                    timepoint = root.split("/")[-2]
+                    if not timepoint in brains.keys():
+                        brains[timepoint] = []
+                    
+                    if "scan_miguel.nii.gz" in files or "scan_lesion.nii.gz" in files:
+                        brains[timepoint].append(root + "/")
                     else:
-                        self.no_lesion.append(root + "/")
-            if split == "train":
-                self.list += self.lesion[:int(len(self.lesion)*prop)]
-                self.list += self.no_lesion[:int(len(self.no_lesion)*prop)]
-            elif split == "validation":
-                self.list += self.lesion[int(len(self.lesion)*prop):]
-                self.list += self.no_lesion[int(len(self.no_lesion)*prop):]
-            else:
-                self.list += self.lesion
-                self.list += self.no_lesion
+                        nolesions.append(root + "/")
 
+        if split == "train":
+            for data in brains.values():
+                self.list.extend(data[:5])
+        elif split == "validation":
+            for data in brains.values():
+                self.list.append(data[5])
+        else:
+            for data in brains.values():
+                self.list.extend(data[6:])
+            self.list += nolesions
 
         # Randomize
         random.shuffle(self.list)
@@ -121,8 +130,14 @@ class CRAllDataset(torch.utils.data.Dataset):
         X = np.moveaxis(X, -1, 1) # Move depth after channels
         X = np.expand_dims(X, axis=0)
 
-        if os.path.isfile(target+"scan"+self.ext+".nii.gz"):
-            Y = nib.load(target+"scan"+self.ext+".nii.gz").get_data()
+        if os.path.isfile(target+"scan_miguel.nii.gz"):
+            Y = nib.load(target+"scan_miguel.nii.gz").get_data()
+            # TODO Add function to make holes
+            Y = np.moveaxis(Y, -1, 0) # Move depth to the beginning
+            Y = np.stack([1.0*(Y==j) for j in range(2)], axis=0)
+        elif os.path.isfile(target+"scan_lesion.nii.gz"):
+            Y = nib.load(target+"scan_lesion.nii.gz").get_data()
+            # TODO Add function to make holes
             Y = np.moveaxis(Y, -1, 0) # Move depth to the beginning
             Y = np.stack([1.0*(Y==j) for j in range(2)], axis=0)
         else:
@@ -134,6 +149,10 @@ class CRAllDataset(torch.utils.data.Dataset):
         W = self._computeWeight(Y)
 
         return np2cuda(X, self.dev), np2cuda(Y, self.dev), id_, W
+
+    def _addHoles(self, Y):
+
+        pass
 
     def _computeWeight(self, Y):
         """This function computes the weights of a manual segmentation.

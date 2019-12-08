@@ -10,18 +10,20 @@ from lib.metrics import *
 import json
 from lib.models.VoxResNet import VoxResNet
 
+from lib.metric import Metric
+
 ex = Experiment("TrainingEvaluation")
 
 @ex.main
 def main(config, Model, data, base_path, _run):
-    log("Start TrainingEvaluation test")
+    log("Start TrainingEvaluation")
 
     base_path = base_path + str(_run._id) + "/"
     config["base_path"] = base_path
 
     # Data
-    tr_data = data("train", config["samples24h"], loss=config["loss_fn"], dev=config["device"])
-    val_data = data("validation", config["samples24h"], loss=config["loss_fn"], dev=config["device"])
+    tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
+    val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
 
     # Model
     model = Model(config)
@@ -39,7 +41,7 @@ def main(config, Model, data, base_path, _run):
     # Save graph
     X, _, _, _ = tr_data[0]
     tb_path = base_path[:-1].split("/")
-    tb_path = tb_path[0] + "/tensorboard/" + "_".join(tb_path[1:])
+    tb_path = "/".join(tb_path[:-2]) + "/tensorboard/" + "_".join(tb_path[-2:])
     writer = SummaryWriter(tb_path)
     writer.add_graph(model, X)
     writer.close()
@@ -116,7 +118,7 @@ def main(config, Model, data, base_path, _run):
             else:
                 tr_loss_tmp = loss_fn(pred, Y, config, W)
             tr_loss += tr_loss_tmp
-            tr_islands += islands_num(pred.detach().cpu())
+            tr_islands += np.sum(Metric(pred.detach().cpu(), None).islands())
 
             # Optimization
             opt.zero_grad()
@@ -129,7 +131,7 @@ def main(config, Model, data, base_path, _run):
         tr_loss /= len(tr_data)
         tr_islands /= len(tr_data)
 
-        # Get summaries to add to tensorboard
+        # Tensorboard summaries
         writer = SummaryWriter(tb_path)
         writer.add_scalar("tr_loss", tr_loss, e)
         writer.add_scalar("tr_islands", tr_islands, e)
@@ -138,7 +140,7 @@ def main(config, Model, data, base_path, _run):
         log("Validation")
         val_loss = 0
         val_islands = 0
-        val_dice = 0 # Dice coef in the lesions
+        val_dice = 0
         val_i = 0
         model.eval()
         with torch.no_grad():
@@ -152,9 +154,9 @@ def main(config, Model, data, base_path, _run):
                 else:
                     val_loss_tmp = loss_fn(pred, Y, config, W)
                 val_loss += val_loss_tmp
-                val_islands += islands_num(pred.cpu())
-                val_dice += dice_coef(pred.cpu().numpy(), Y.cpu().numpy())[0][1] # Lesion dice
-                # Calculate Dice coef during validation
+                m = Metric(pred.cpu().numpy(), Y.cpu().numpy())
+                val_islands += np.sum(m.islands())
+                val_dice += m.dice()[:,1] # Lesion Dice
 
                 if id_ in config["save_validation"]:
                     name = id_ + "_" + str(e)
@@ -170,7 +172,7 @@ def main(config, Model, data, base_path, _run):
         val_islands /= len(val_data)
         val_dice /= len(val_data)
 
-        # Get summaries to add to tensorboard
+        # Tensorboard summaries
         writer = SummaryWriter(tb_path)
         writer.add_scalar("val_loss", val_loss, e)
         writer.add_scalar("val_islands", val_islands, e)
@@ -195,8 +197,8 @@ def main(config, Model, data, base_path, _run):
         e += 1
 
     log("Testing")
-    test_data = data("test", config["samples24h"], loss=config["loss_fn"], dev=config["device"])
-    if config["save_prediction"]:
+    test_data = data("test", loss=config["loss_fn"], dev=config["device"])
+    if config["save_prediction_mask"] or config["save_prediction_softmaxprob"]:
         os.makedirs(config["base_path"] + "preds")
 
 
@@ -211,29 +213,20 @@ def main(config, Model, data, base_path, _run):
             pred = output[0].cpu().numpy()
             Y = Y.cpu().numpy() # NBWHC
 
-            if config["save_prediction"]:
+            if config["save_prediction_mask"]:
                 _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
-                # For Leiden dataset and Cologne-2
-                #_out = np.argmax(np.moveaxis(np.reshape(out, (2,10,128,128)), 1, -1), axis=0)
-                # For Cologne-1
-                #try:
-                #    _out = np.argmax(np.moveaxis(np.reshape(out, (2,12,196,196)), 1, -1), axis=0)
-                #except:
-                #    _out = np.argmax(np.moveaxis(np.reshape(out, (2,10,196,196)), 1, -1), axis=0)
-                nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + ".nii.gz")
+                nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_mask.nii.gz")
 
-            dice_res = list(dice_coef(pred, Y)[0])
-            haus_res = hausdorff_distance(pred, Y)[0]
-            islands_res = islands_num(pred)[0]
-            results[id_] = [dice_res, islands_res, haus_res]
+            if config["save_prediction_softmaxprob"]:
+                _out = np.moveaxis(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), 0, -1)
+                nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_softmaxprob.nii.gz")
 
+            results[id_] = Metric(pred, Y).all()
+
+            # Results after post-processing
             if config["removeSmallIslands_thr"] != -1:
-                # Results after post-processing
                 pred = removeSmallIslands(pred, thr=config["removeSmallIslands_thr"])
-                dice_res_post = list(dice_coef(pred, Y)[0])
-                haus_res_post = hausdorff_distance(pred, Y)[0]
-                islands_res_post = islands_num(pred)[0]
-                results_post[id_] = [dice_res_post, islands_res_post, haus_res_post]
+                results_post[id_] = Metric(pred, Y).all()
 
     with open(config["base_path"] + "results.json", "w") as f:
         f.write(json.dumps(results))

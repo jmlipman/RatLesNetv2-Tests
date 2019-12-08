@@ -13,6 +13,8 @@ from lib.losses import *
 from lib.utils import he_normal
 from lib.lr_scheduler import CustomReduceLROnPlateau
 import argparse
+from sacred import SETTINGS
+SETTINGS.CONFIG.READ_ONLY_CONFIG = False
 
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
@@ -90,7 +92,8 @@ elif pc_name == "sampo-tipagpu1":
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction"] = True # Save preds on Testing section.
+config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights

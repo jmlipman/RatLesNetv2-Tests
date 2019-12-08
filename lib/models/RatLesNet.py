@@ -88,7 +88,7 @@ class RatLesNet(nn.Module):
         x = self.bottleneck3(x)
         x = torch.functional.F.softmax(x, dim=1)
 
-        return x
+        return (x,)
 
 class RatLesNet_ResNet(nn.Module):
 

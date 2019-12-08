@@ -4,8 +4,8 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
 from lib.models.RatLesNet import *
-#from lib.data.CRAllDataset import CRAllDataset as Data
-from lib.data.Cologne2Dataset import Cologne2Dataset as Data
+from lib.data.CRAllDataset import CRAllDataset as Data
+#from lib.data.Cologne2Dataset import Cologne2Dataset as Data
 import itertools, os
 import time, torch
 import numpy as np
@@ -13,6 +13,8 @@ from lib.losses import *
 from lib.utils import he_normal
 from lib.lr_scheduler import CustomReduceLROnPlateau
 import argparse
+from sacred import SETTINGS
+SETTINGS.CONFIG.READ_ONLY_CONFIG = False
 
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
@@ -60,7 +62,7 @@ config["data"] = Data
 config["Model"] = RatLesNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700 # Originally 700
+config["config.epochs"] = 0 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -85,14 +87,18 @@ if pc_name == "FUJ":
     config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
 elif pc_name == "nmrcs3":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+elif pc_name == "sampo-tipagpu1":
+    config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
 else:
-    raise Exception("Unknown PC")
+    raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction"] = True # Save preds on Testing section.
+config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
+config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights
-#config["config.model_state"] = "results_RatLesNet/RatLesNet_mulder/1/model/model-699"
-config["config.model_state"] = ""
+config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/RatLesNet_mixed/1/model/model-699"
+#config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
 config["config.lr_scheduler_patience"] = 4
@@ -147,7 +153,7 @@ for _ in all_configs:
     for __ in range(1):
         ci += 1
         # Name of the experiment and path
-        exp_name = "RatLesNet_cologne2"
+        exp_name = "test"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

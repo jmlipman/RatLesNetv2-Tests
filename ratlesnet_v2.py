@@ -1,6 +1,6 @@
 from sacred.observers import FileStorageObserver
 from experiments.TrainingEvaluation import ex
-#from experiments.GeneratePredictions import ex
+#from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
@@ -12,10 +12,11 @@ from lib.losses import *
 from lib.utils import he_normal
 from lib.lr_scheduler import CustomReduceLROnPlateau
 import argparse
-#from sacred import SETTINGS
-#SETTINGS.CONFIG.READ_ONLY_CONFIG = False
+from sacred import SETTINGS
+SETTINGS.CONFIG.READ_ONLY_CONFIG = False
 
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # Speed up the script.
 # This seems to not be a good idea when the input sizes change during the training.
@@ -47,23 +48,14 @@ else:
 # - Decrease learning rate options should be modelable from here.
 # - Check "predict" method from ModelBase class.
 
-BASE_PATH = "results_24hvariability/"
-messageTwitter = "ratlesnet_"
-
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
-
 ### Fixed configuration
-# TODO let's see how to put the data.
-#data = Data
-#data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
-config["data"] = Data24h
+config["data"] = DataOrig
 config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 500 # Originally 700
+config["config.epochs"] = 5 # Originally 700
 config["config.batch"] = 1
-#config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
@@ -74,25 +66,29 @@ config["config.classes"] = 2
 
 
 ### Model architecture
-config["config.first_filters"] = 32 #32 for RatLesNetv2, 21 for same params as RatLesNet
+config["config.first_filters"] = 32 #32 for RatLesNetv2, 21 for same params as RatLesNet. 39 for LVL2_sameparams
 config["config.block_convs"] = 2 # Number of convolutions within block
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
 if pc_name == "FUJ":
     config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
+    BASE_PATH = "/home/miguelv/data/out/RAW/"
 elif pc_name == "nmrcs3":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+    BASE_PATH = "/home/miguelv/data/out/RAW/"
 elif pc_name == "sampo-tipagpu1":
     config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+    BASE_PATH = "/home/users/miguelv/data/out/RAW/"
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction"] = False # Save preds on Testing section.
+config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights
-#config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/1-nmr/baseline_mixed/1/model/model-699"
+#config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/3-ablation/level2_sameparams_mixed/2/model/model-699"
 config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
@@ -131,6 +127,9 @@ config["config.early_stopping_thr"] = 999
 #config["config.wd_rate"] = 0.1 # Always 0.1
 #config["config.wd_epochs"] = [int(len(data.getFiles("training"))*config["config.wd_epochs"]*i/config["config.batch"]) for i in range(1, int(config["config.epochs"]/config["config.wd_epochs"]+1))]
 #config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
+#####################
+
+BASE_PATH += "delete/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
@@ -143,14 +142,14 @@ config["config.early_stopping_thr"] = 999
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [1,2,3,4,5,6]
+all_configs = [0]
 
 for ss in all_configs:
 
-    for __ in range(5):
+    for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "samples"+str(ss)
+        exp_name = "Miguel02NOV16_training"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         #if data == DataOrig:
@@ -169,12 +168,9 @@ for ss in all_configs:
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
-            config["config.samples24h"] = ss
 
             ex.run(config_updates=config)
 
-            show_text = messageTwitter + exp_name + " ({}/{})".format(ci, len(all_configs))
-            print(show_text)
         except KeyboardInterrupt:
             raise
         except:

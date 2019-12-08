@@ -3,6 +3,38 @@ from skimage import measure
 from scipy import ndimage
 from lib.utils import border_np
 
+def sensivity_precision(y_pred, y_true):
+    """ Sensivity: Among the real lesion voxels, how many I can accurately predict.
+        Precision: Among the predicted lesion voxels, how many I can accurately predict.
+        Note this assumes only two classes!
+    """
+
+    num_samples = y_pred.shape[0]
+    sensivity = np.zeros(num_samples)
+    precision = np.zeros(num_samples)
+    TP = np.zeros(num_samples)
+    TN = np.zeros(num_samples)
+    FP = np.zeros(num_samples)
+    FN = np.zeros(num_samples)
+
+    for i in range(num_samples):
+
+        y_pred_ = np.argmax(y_pred[i], axis=0)
+        y_true_ = np.argmax(y_true[i], axis=0)
+
+
+        TP[i] = int(np.sum(y_pred_*y_true_))
+        TN[i] = int(np.sum((1-y_pred_)*(1-y_true_)))
+        FP[i] = int(np.sum(y_pred_*(1-y_true_)))
+        FN[i] = int(np.sum((1-y_pred_)*y_true_))
+
+        sensivity[i] = TP[i] / (TP[i] + FN[i] + 1e-10)
+        precision[i] = TP[i] / (TP[i] + FP[i] + 1e-10)
+
+    return [sensivity, precision, TP, TN, FP, FN]
+
+
+
 def dice_coef(y_pred, y_true):
     """This function calculates the Dice coefficient.
 
