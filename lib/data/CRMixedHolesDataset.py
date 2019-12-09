@@ -31,7 +31,7 @@ class CRMixedHolesDataset(torch.utils.data.Dataset):
         self.dev = dev
         # Split between training and validation from 02NOV2016
         prop = 0.8 
-        self.thr_holes = 0.1 # Percentage of holes
+        self.thr_holes = 0.15 # Percentage of holes
 
         # Depending on the computer the data is located in a different folder
         pc_name = os.uname()[1]

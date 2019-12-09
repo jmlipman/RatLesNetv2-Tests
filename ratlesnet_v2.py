@@ -6,7 +6,7 @@ from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedHolesDataset import CRMixedHolesDataset as DataMixedHoles
 from lib.data.CR24hDataset import CR24hDataset as Data24h
 import itertools, os
-import time, torch
+import time
 import numpy as np
 from lib.losses import *
 from lib.utils import he_normal
@@ -15,6 +15,7 @@ import argparse
 from sacred import SETTINGS
 SETTINGS.CONFIG.READ_ONLY_CONFIG = False
 
+# NOTE verify whether this should be before "import torch"
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
@@ -29,6 +30,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-gpu", dest="gpu", default=0)
 args = parser.parse_args()
 
+import torch
 # Setting GPU-CPU
 if args.gpu >= torch.cuda.device_count():
     if torch.cuda.device_count() == 0:
@@ -149,7 +151,7 @@ for ss in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "thr0.1_mixed"
+        exp_name = "thr0.15_mixed"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         #if data == DataOrig:
