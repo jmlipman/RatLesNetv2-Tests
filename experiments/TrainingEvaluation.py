@@ -196,7 +196,7 @@ def main(config, Model, data, base_path, _run):
 
     log("Testing")
     test_data = data("test", loss=config["loss_fn"], dev=config["device"])
-    if config["save_prediction_mask"] or config["save_prediction_softmaxprob"]:
+    if config["save_prediction_mask"] or config["save_prediction_softmaxprob"] or config["save_prediction_logits"]:
         os.makedirs(config["base_path"] + "preds")
 
 
@@ -214,6 +214,11 @@ def main(config, Model, data, base_path, _run):
             if config["save_prediction_mask"]:
                 _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_mask.nii.gz")
+
+            if config["save_prediction_logits"] and len(output) > 1:
+                logits = output[1].cpu().numpy()
+                _out = np.moveaxis(np.moveaxis(np.reshape(logits, (2,18,256,256)), 1, -1), 0, -1)
+                nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_logits.nii.gz")
 
             if config["save_prediction_softmaxprob"]:
                 _out = np.moveaxis(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), 0, -1)

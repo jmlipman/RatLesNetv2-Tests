@@ -3,7 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
-from lib.data.CRMixedHolesDataset import CRMixedHolesDataset as DataMixedHoles
+from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
 from lib.data.CR24hDataset import CR24hDataset as Data24h
 import itertools, os
 import time
@@ -52,7 +52,7 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataMixedHoles
+config["data"] = DataMixed
 config["Model"] = RatLesNet_v2_v1
 config["config.device"] = device
 config["config.lr"] = 1e-4
@@ -85,9 +85,10 @@ elif pc_name == "sampo-tipagpu1":
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
-config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
+config["config.save_prediction_logits"] = True # Save logits of the predictions on Testing section.
+config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20. If not, -1
 
 ### Loading Weights
 #config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/3-ablation/level2_sameparams_mixed/2/model/model-699"
@@ -131,7 +132,7 @@ config["config.early_stopping_thr"] = 999
 #config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
 #####################
 
-BASE_PATH += "RatLesNetv2_holes/"
+BASE_PATH += "Inconsistency/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
@@ -151,7 +152,7 @@ for ss in all_configs:
     for __ in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "thr0.15_mixed"
+        exp_name = "baseline"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         #if data == DataOrig:

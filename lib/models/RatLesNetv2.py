@@ -74,7 +74,7 @@ class RatLesNet_v2_v1(nn.Module):
 
         softed = torch.functional.F.softmax(b4, dim=1)
         # Must be a tuple
-        return (softed, )
+        return (softed, b4)
         #return softed, b4, b1, b2, b3, block2_out, block3_out, block4_out, block5_out, block6_out
 
 class RatLesNet_v2_LVL2(nn.Module):
