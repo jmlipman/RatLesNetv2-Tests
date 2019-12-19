@@ -4,7 +4,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
 from lib.models.VoxResNet import VoxResNet
-from lib.data.CRMixedDataset import CRMixedDataset as Data
+from lib.data.CRAllDataset import CRAllDataset as Data
 #from lib.data.LeidenDataset import LeidenDataset as Data
 import itertools, os
 import time, torch
@@ -92,12 +92,13 @@ elif pc_name == "sampo-tipagpu1":
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
-config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
+config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section
+config["config.removeSmallIslands_thr"] = -1 # Remove independent connected components. Use 20.
 
 ### Loading Weights
-config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_mixed/1/model/model-699"
+config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_orig/2/model/model-699"
 #config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
@@ -150,10 +151,10 @@ all_configs = [1] # Run 5 times
 
 for lr in all_configs:
 
-    for __ in range(3):
+    for __ in range(1):
         ci += 1
         # Name of the experiment and path
-        exp_name = "VoxResNet_mixed"
+        exp_name = "VoxResNet_orig"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
 

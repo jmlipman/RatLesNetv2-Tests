@@ -15,10 +15,10 @@ class Metric:
         dice = list(self.dice()[0])
         hausdorff = self.hausdorff_distance()[0]
         islands = self.islands()[0]
-        sens, prec, tp, tn, fp, fn = self.sensivity_precision()
-        sens, prec, tp, tn, fp, fn = sens[0], prec[0], tp[0], tn[0], fp[0], fn[0]
+        sens, spec, prec, tp, tn, fp, fn = self.sensivity_precision()
+        sens, spec, prec, tp, tn, fp, fn = sens[0], spec[0], prec[0], tp[0], tn[0], fp[0], fn[0]
         
-        return [dice, islands, hausdorff, sens, prec, tp, tn, fp, fn]
+        return [dice, islands, hausdorff, sens, spec, prec, tp, tn, fp, fn]
 
     def dice(self):
         """This function calculates the Dice coefficient.
@@ -90,6 +90,7 @@ class Metric:
 
         num_samples = self.y_pred.shape[0]
         sensivity = np.zeros(num_samples)
+        specificity = np.zeros(num_samples)
         precision = np.zeros(num_samples)
         TP = np.zeros(num_samples)
         TN = np.zeros(num_samples)
@@ -108,9 +109,10 @@ class Metric:
             FN[i] = int(np.sum((1-y_pred)*y_true))
 
             sensivity[i] = TP[i] / (TP[i] + FN[i] + 1e-10)
+            specificity[i] = TN[i] / (TN[i] + FP[i] + 1e-10)
             precision[i] = TP[i] / (TP[i] + FP[i] + 1e-10)
 
-        return [sensivity, precision, TP, TN, FP, FN]
+        return [sensivity, precision, specificity, TP, TN, FP, FN]
 
     def _border_distance(self, y_pred, y_true):
         """Distance between two borders.

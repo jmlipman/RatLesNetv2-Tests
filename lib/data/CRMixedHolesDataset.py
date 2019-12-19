@@ -149,10 +149,6 @@ class CRMixedHolesDataset(torch.utils.data.Dataset):
 
         return np2cuda(X, self.dev), np2cuda(Y, self.dev), id_, W
 
-    def _addHoles(self, Y):
-
-        pass
-
     def _computeWeight(self, Y):
         """This function computes the weights of a manual segmentation.
            The weights are computed based on the loss function used.
