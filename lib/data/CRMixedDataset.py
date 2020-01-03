@@ -64,6 +64,8 @@ class CRMixedDataset(torch.utils.data.Dataset):
         if split == "train":
             for data in brains.values():
                 self.list.extend(data[:5])
+            for l in self.list:
+                print(l)
         elif split == "validation":
             for data in brains.values():
                 self.list.append(data[5])

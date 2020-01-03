@@ -96,7 +96,7 @@ config["config.removeSmallIslands_thr"] = 20 # Remove independent connected comp
 
 ### Loading Weights
 #config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/1-ratlesnetv2/baseline_mixed/1/model/model-699"
-#config["config.model_state"] = ""
+config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
 config["config.lr_scheduler_patience"] = 4
