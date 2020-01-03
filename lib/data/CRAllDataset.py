@@ -61,6 +61,9 @@ class CRAllDataset(torch.utils.data.Dataset):
                         self.lesion.append(root + "/")
                     else:
                         self.no_lesion.append(root + "/")
+            self.lesion = sorted(self.lesion)
+            self.no_lesion = sorted(self.no_lesion)
+
             if split == "train":
                 self.list += self.lesion[:int(len(self.lesion)*prop)]
                 self.list += self.no_lesion[:int(len(self.no_lesion)*prop)]

@@ -52,7 +52,7 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataMixed
+config["data"] = DataOrig
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4

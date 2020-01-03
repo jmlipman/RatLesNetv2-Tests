@@ -61,11 +61,13 @@ class CRMixedDataset(torch.utils.data.Dataset):
                     else:
                         nolesions.append(root + "/")
 
+        nolesions = sorted(nolesions)
+        for timepoint in brains.keys():
+            brains[timepoint] = sorted(brains[timepoint])
+
         if split == "train":
             for data in brains.values():
                 self.list.extend(data[:5])
-            for l in self.list:
-                print(l)
         elif split == "validation":
             for data in brains.values():
                 self.list.append(data[5])
