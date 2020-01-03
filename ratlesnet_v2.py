@@ -52,18 +52,18 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataOrig
+config["data"] = DataMixed
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 50 # Originally 700
+config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
 config["config.loss_fn"] = CrossEntropyDiceLoss
-config["config.opt"] = torch.optim.Adam
+config["config.opt"] = torch.optim.RAdam
 config["config.classes"] = 2
 
 
