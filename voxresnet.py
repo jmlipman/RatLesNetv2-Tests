@@ -95,10 +95,10 @@ config["config.save_npy"] = False
 config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section
-config["config.removeSmallIslands_thr"] = -1 # Remove independent connected components. Use 20.
+config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
 
 ### Loading Weights
-config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_orig/2/model/model-699"
+#config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_mixed/1/model/model-699"
 #config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
@@ -151,7 +151,7 @@ all_configs = [1] # Run 5 times
 
 for lr in all_configs:
 
-    for __ in range(1):
+    for i in range(3):
         ci += 1
         # Name of the experiment and path
         exp_name = "VoxResNet_orig"
@@ -165,6 +165,7 @@ for lr in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
+            config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_orig/"+str(i+1)+"/model/model-699"
             #config["config.lr"] = lr
             #config["config.growth_rate"] = fsize
             #config["config.concat"] = concat

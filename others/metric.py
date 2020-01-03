@@ -1,7 +1,8 @@
 import numpy as np
 from skimage import measure
 from scipy import ndimage
-from lib.utils import border_np
+from utils import border_np
+import time
 
 class Metric:
     def __init__(self, y_pred, y_true):
@@ -12,12 +13,25 @@ class Metric:
         """Compute all metrics. Useful for evaluation.
            It assumes that BatchSize is 1
         """
+        t0 = time.time()
         dice = list(self.dice()[0])
+        t1 = time.time()
         hausdorff, hausdorff_anisotropy = self.hausdorff_distance()[0]
+        t2 = time.time()
         islands = self.islands()[0]
+        t3 = time.time()
         sens, prec, spec, tp, tn, fp, fn = self.sensivity_precision()
+        t4 = time.time()
         sens, prec, spec, tp, tn, fp, fn = sens[0], prec[0], spec[0], tp[0], tn[0], fp[0], fn[0]
+        t5 = time.time()
         comp1, comp2, comp_inv1, comp_inv2 = self.compactness()[0]
+        t6 = time.time()
+
+        print("Dice: "+str(t1-t0))
+        print("HD: "+str(t2-t1))
+        print("Islands: "+str(t3-t2))
+        print("Spec...: "+str(t4-t3))
+        print("Compact: "+str(t6-t5))
         
         return [dice, islands, hausdorff, sens, prec, spec, tp, tn, fp, fn, hausdorff_anisotropy, comp1, comp2, comp_inv1, comp_inv2]
 
@@ -71,24 +85,10 @@ class Metric:
            From NiftyNet.
            2-classes only!
         """
-        num_samples = self.y_pred.shape[0]
-        results = np.zeros((num_samples, 2))
-        for i in range(num_samples):
-            y_pred = np.argmax(self.y_pred[i], axis=0)
-            y_true = np.argmax(self.y_true[i], axis=0)
-            ref_border_dist, seg_border_dist = self._border_distance(y_pred, y_true)
-            results[i,0] = np.max([np.max(ref_border_dist), np.max(seg_border_dist)])
 
-            # Increasing the number of slices, to 9 per slice.
-            y_pred2 = np.zeros((18*9,256,256))
-            y_true2 = np.zeros((18*9,256,256))
-            for j in range(18):
-                y_true2[j*9:(j+1)*9,:,:] = y_true[j:j+1,:,:]
-                y_pred2[j*9:(j+1)*9,:,:] = y_pred[j:j+1,:,:]
-            ref_border_dist2, seg_border_dist2 = self._border_distance(y_pred2, y_true2)
-            results[i,1] = np.max([np.max(ref_border_dist2), np.max(seg_border_dist2)])
+        ref_border_dist, seg_border_dist = self._border_distance(self.y_pred, self.y_true)
+        return np.max([np.max(ref_border_dist), np.max(seg_border_dist)])
 
-        return results
 
     def compactness(self):
         """surface^1.5 / volume

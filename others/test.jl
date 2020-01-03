@@ -1,11 +1,19 @@
 using NIfTI
-using ImageDistances
-
 include("utils.jl")
 
 PATH = "/media/miguelv/HD1/Inconsistency/baseline/"
 PATH_DATA = "/media/miguelv/HD1/CR_DATA/"
 
+path = string(PATH, "1/preds/02NOV2016_24h_12_logits.nii.gz")
+
+println(path)
+
+logits = niread(path);
+softed = softmax(logits);
+arged = my_argmax(softed);
+#niwrite("lala.nii.gz", NIVolume(arged))
+
+"""
 # PART 1. PERFORMANCE WRT. GROUND TRUTH
 println("Performance assessment")
 for i=1:length(readdir(PATH))
@@ -26,24 +34,18 @@ for i=1:length(readdir(PATH))
 			else
 				GT = zeros(256, 256, 18);
 			end
-			#GT = cat(GT .== 0, GT .== 1, dims=length(size(GT))+1)
+			GT = cat(GT .== 0, GT .== 1, dims=length(size(GT))+1)
 
 			# Reading values
 			softed = softmax(niread(filepath));
 			y_pred = my_argmax(softed);
-
-			println(size(y_pred))
+			println(sum(y_pred .== 1))
 			
 
 			# Calculate DICE and other metrics
-			println(dice(y_pred, GT))
-			if sum(GT) != 0
-				@time begin
-					println(hausdorff(y_pred, GT))
-				end
-			end
+			dice(y_pred, GT)
 
 		end
 	end
 end
-
+"""
