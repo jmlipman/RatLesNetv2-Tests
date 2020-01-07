@@ -3,7 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
-from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
+from lib.data.CRMixedLargerDataset import CRMixedLargerDataset as DataMixedLarger
 from lib.data.CR24hDataset import CR24hDataset as Data24h
 import itertools, os
 import time
@@ -52,7 +52,7 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataMixed
+config["data"] = DataMixedLarger
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4
@@ -63,7 +63,7 @@ config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
 config["config.loss_fn"] = CrossEntropyDiceLoss
-config["config.opt"] = torch.optim.RAdam
+config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
 
@@ -89,9 +89,9 @@ elif pc_name == "sampo-tipagpu1":
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
-config["config.save_prediction_logits"] = True # Save logits of the predictions on Testing section.
+config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20. If not, -1
 
 ### Loading Weights
@@ -136,7 +136,7 @@ config["config.early_stopping_thr"] = 999
 #config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
 #####################
 
-BASE_PATH += "RatLesNetv2_Inconsistency/"
+BASE_PATH += "RatLesNetv2_LargerMixed/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
@@ -149,14 +149,14 @@ BASE_PATH += "RatLesNetv2_Inconsistency/"
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [0]
+all_configs = [1, 2, 3, 4, 6]
 
-for ss in all_configs:
+for pr in all_configs:
 
-    for i in range(5):
+    for i in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "baseline_improved"
+        exp_name = "mixedlength_"+str(pr)
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         #if data == DataOrig:
@@ -172,7 +172,7 @@ for ss in all_configs:
 
             # Testing paramenters
             #config["data"] = data
-            #config["config.growth_rate"] = fsize
+            config["config.tr_prop"] = pr
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
 

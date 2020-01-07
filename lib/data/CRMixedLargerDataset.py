@@ -7,23 +7,25 @@ from lib.losses import *
 
 class CRMixedLargerDataset(torch.utils.data.Dataset):
 
-    def __init__(self, split, loss=None, dev=None):
+    def __init__(self, split, prop=None, loss=None, dev=None):
         """This class will have as a training set 5 lesion-containing scans
            of each time-point. Validation will be 1 lesion-containing scan per
            time-point. Test will be the rest
 
            Args:
             `split`: "train", "validation", "test".
+            `prop`: number of samples per time-point for training.
             `loss`: loss function used in the code. This is used to compute
              the weights because different loss functions use diff. weights.
             `dev`: device where the data will be brought (cuda/cpu)
-            `seg`: Which segmentation is retrieving.
         """
         self.split = split
         self.loss = loss
         self.dev = dev
         # Split between training and validation from 02NOV2016
-        prop = 0.8 
+        # Maximum value of prop is 11, for now.
+        if split == "train" and prop == None:
+            raise Exception("prop cannot be None")
 
         # Depending on the computer the data is located in a different folder
         pc_name = os.uname()[1]
@@ -63,13 +65,15 @@ class CRMixedLargerDataset(torch.utils.data.Dataset):
 
         if split == "train":
             for data in brains.values():
-                self.list.extend(data[:15])
+                self.list.extend(data[:prop])
         elif split == "validation":
             for data in brains.values():
-                self.list.extend(data[15:18])
-        else:
+                self.list.extend(data[11:12])
+        else: # Note that the brains from the validation are included in the test
+            # But this doesn't really matter because I am not using the validation
+            # for anything like Early Stopping.
             for data in brains.values():
-                self.list.extend(data[18:])
+                self.list.extend(data[11:])
             self.list += nolesions
 
         # Randomize

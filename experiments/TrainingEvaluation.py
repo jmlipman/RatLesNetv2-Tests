@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from sacred import Experiment
 import os, time, torch
 #from torchsummary import summary
@@ -10,6 +12,35 @@ import json
 from lib.models.VoxResNet import VoxResNet
 from lib.metric import Metric
 
+def plot_grad_flow(named_parameters):
+    '''Plots the gradients flowing through different layers in the net during training.
+    Can be used for checking for possible gradient vanishing / exploding problems.
+    
+    Usage: Plug this function in Trainer class after loss.backwards() as 
+    "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
+    ave_grads = []
+    max_grads= []
+    layers = []
+    for n, p in named_parameters:
+        if(p.requires_grad) and ("bias" not in n):
+            layers.append(n)
+            ave_grads.append(p.grad.abs().mean())
+            max_grads.append(p.grad.abs().max())
+    plt.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
+    plt.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
+    plt.hlines(0, 0, len(ave_grads)+1, lw=2, color="k" )
+    plt.xticks(range(0,len(ave_grads), 1), layers, rotation="vertical")
+    plt.xlim(left=0, right=len(ave_grads))
+    plt.ylim(bottom = -0.001, top=1) # zoom in on the lower gradient regions
+    plt.xlabel("Layers")
+    plt.ylabel("average gradient")
+    plt.title("Gradient flow")
+    plt.grid(True)
+    plt.legend([Line2D([0], [0], color="c", lw=4),
+                Line2D([0], [0], color="b", lw=4),
+                Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
+    plt.show()
+
 ex = Experiment("TrainingEvaluation")
 
 @ex.main
@@ -20,8 +51,11 @@ def main(config, Model, data, base_path, _run):
     config["base_path"] = base_path
 
     # Data
-    tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
+    #tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
+    tr_data = data("train", prop=config["tr_prop"], loss=config["loss_fn"], dev=config["device"])
     val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
+
+    print(len(tr_data))
 
     # Model
     model = Model(config)
@@ -67,16 +101,6 @@ def main(config, Model, data, base_path, _run):
 
     # Save model and optimizer's state dict
     param_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    #p1 = sum(p.numel() for p in model.conv1.parameters() if p.requires_grad)
-    #p2 = sum(p.numel() for p in model.dense1.parameters() if p.requires_grad)
-    #p3 = sum(p.numel() for p in model.dense2.parameters() if p.requires_grad)
-    #p4 = sum(p.numel() for p in model.bottleneck1.parameters() if p.requires_grad)
-    #p5 = sum(p.numel() for p in model.dense3.parameters() if p.requires_grad)
-    #p6 = sum(p.numel() for p in model.bottleneck2.parameters() if p.requires_grad)
-    #p7 = sum(p.numel() for p in model.dense4.parameters() if p.requires_grad)
-    #p8 = sum(p.numel() for p in model.bottleneck3.parameters() if p.requires_grad)
-    #print("Encoder: "+str(p1+p2+p3+p4) + " (before: 83052)")
-    #print("Decoder: "+str(p5+p6+p7+p8) + " (before: 284282)")
 
     log("Number of parameters: " + str(param_num))
     with open(base_path + "state_dict", "w") as f:
@@ -110,7 +134,7 @@ def main(config, Model, data, base_path, _run):
 
             output = model(X)
             pred = output[0]
-            #print(activations.mean().cpu(), activations.std().cpu())
+
             if W is None:
                 tr_loss_tmp = loss_fn(pred, Y, config)
             else:
@@ -121,6 +145,15 @@ def main(config, Model, data, base_path, _run):
             # Optimization
             opt.zero_grad()
             tr_loss_tmp.backward()
+
+            #writer = SummaryWriter(tb_path)
+            #record_grads = ["bottleneck4.seq.2.weight", "conv1.weight", "block3.seq.4.weight"]
+            #for n, p in model.named_parameters():
+            #    if n in record_grads:
+            #        writer.add_histogram(n, p.grad, e)
+            #writer.close()
+
+            #plot_grad_flow(model.named_parameters())
             opt.step()
 
             it += 1
@@ -129,6 +162,11 @@ def main(config, Model, data, base_path, _run):
         tr_loss /= len(tr_data)
         tr_islands /= len(tr_data)
 
+        #for n, p in named_parameters:
+        #    if(p.requires_grad) and ("bias" not in n):
+        #        layers.append(n)
+        #        ave_grads.append(p.grad.abs().mean())
+        #        max_grads.append(p.grad.abs().max()
         # Tensorboard summaries
         writer = SummaryWriter(tb_path)
         writer.add_scalar("tr_loss", tr_loss, e)
