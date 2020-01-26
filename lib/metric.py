@@ -34,13 +34,15 @@ class Metric:
         num_samples = self.y_pred.shape[0]
         num_classes = self.y_pred.shape[1]
         results = np.zeros((num_samples, num_classes))
-        y_pred = np.argmax(self.y_pred, axis=1)
-        y_true = np.argmax(self.y_true, axis=1)
+        #y_pred = np.argmax(self.y_pred, axis=1)
+        #y_true = np.argmax(self.y_true, axis=1)
 
         for i in range(num_samples):
             for c in range(num_classes):
-                a = y_pred[i] == c
-                b = y_true[i] == c
+                #a = y_pred[i] == c
+                #b = y_true[i] == c
+                a = 1.0*(self.y_pred[i,c] > 0.5)
+                b = 1.0*(self.y_true[i,c] > 0.5)
                 if np.sum(b) == 0: # If no lesion in the y_true
                     if np.sum(a) == 0: # No lesion predicted
                         result = 1.0

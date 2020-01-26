@@ -3,8 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
-from lib.data.CRMixedLargerDataset import CRMixedLargerDataset as DataMixedLarger
-from lib.data.CR24hDataset import CR24hDataset as Data24h
+from lib.data.CRMixedBrainmaskDataset import CRMixedBrainmaskDataset as DataMixed
 import itertools, os
 import time
 import numpy as np
@@ -14,6 +13,7 @@ from lib.lr_scheduler import CustomReduceLROnPlateau
 import argparse
 from sacred import SETTINGS
 SETTINGS.CONFIG.READ_ONLY_CONFIG = False
+SETTINGS.CAPTURE_MODE = 'sys'
 
 # NOTE verify whether this should be before "import torch"
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
@@ -52,11 +52,11 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataMixedLarger
+config["data"] = DataMixed
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700 # Originally 700
+config["config.epochs"] = 400
 config["config.batch"] = 1
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
@@ -65,7 +65,6 @@ config["config.act"] = torch.nn.ReLU()
 config["config.loss_fn"] = CrossEntropyDiceLoss
 config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
-
 
 ### Model architecture
 # 32 for RatLesNetv2
@@ -115,7 +114,12 @@ config["config.lr_scheduler"] = CustomReduceLROnPlateau(
 config["config.lr_scheduler"] = None
 
 ### Regularization
-config["config.alpha_length"] = 0.000001
+config["config.alpha_length"] = 0.000001 # Length regularization
+config["config.weight_decay"] = 0
+
+### Data-related
+config["config.brainmask"] = True
+config["config.overlap"] = True
 
 
 ####### Not migrated confs:
@@ -136,7 +140,7 @@ config["config.early_stopping_thr"] = 999
 #config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
 #####################
 
-BASE_PATH += "RatLesNetv2_LargerMixed/"
+BASE_PATH += "multilabel/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
@@ -149,14 +153,14 @@ BASE_PATH += "RatLesNetv2_LargerMixed/"
 ci = 0
 
 #all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [1, 2, 3, 4, 6]
+all_configs = [0.001, 0.0001]
 
-for pr in all_configs:
+for wd in all_configs:
 
     for i in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "mixedlength_"+str(pr)
+        exp_name = "delete"
         if not config["config.lr_scheduler"] is None:
             exp_name += "_ES"
         #if data == DataOrig:
@@ -171,8 +175,8 @@ for pr in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
+            config["config.weight_decay"] = wd
             #config["data"] = data
-            config["config.tr_prop"] = pr
             #config["config.concat"] = concat
             #config["config.skip_connection"] = skip
 

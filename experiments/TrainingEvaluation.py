@@ -11,6 +11,9 @@ from lib.utils import log, removeSmallIslands
 import json
 from lib.models.VoxResNet import VoxResNet
 from lib.metric import Metric
+import multiprocessing
+
+PROCESSES = 6 # For post-processing
 
 def plot_grad_flow(named_parameters):
     '''Plots the gradients flowing through different layers in the net during training.
@@ -51,11 +54,21 @@ def main(config, Model, data, base_path, _run):
     config["base_path"] = base_path
 
     # Data
-    #tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
-    tr_data = data("train", prop=config["tr_prop"], loss=config["loss_fn"], dev=config["device"])
-    val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
+    tr_data = data("train", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
+    val_data = data("validation", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
 
-    print(len(tr_data))
+    # Calculating compactness in the training data
+    """
+    comp_vals = []
+    for tr_i in range(len(tr_data)):
+        X, Y, id_, W = tr_data[tr_i]
+        comp_vals.append(str(Metric(Y.detach().cpu().numpy(), None).compactness()[0][-1]))
+
+    with open("compactness_results", "a") as f:
+        f.write(",".join(comp_vals) + "\n")
+    import sys
+    sys.exit(1)
+    """
 
     # Model
     model = Model(config)
@@ -94,7 +107,7 @@ def main(config, Model, data, base_path, _run):
     ep = config["epochs"]
     bs = config["batch"]
     loss_fn = config["loss_fn"]
-    opt = config["opt"](model.parameters(), lr=config["lr"])
+    opt = config["opt"](model.parameters(), lr=config["lr"], weight_decay=config["weight_decay"])
     lr_scheduler = config["lr_scheduler"]
     if not lr_scheduler is None:
         lr_scheduler.setOptimizer(opt)
@@ -233,7 +246,7 @@ def main(config, Model, data, base_path, _run):
         e += 1
 
     log("Testing")
-    test_data = data("test", loss=config["loss_fn"], dev=config["device"])
+    test_data = data("test", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
     if config["save_prediction_mask"] or config["save_prediction_softmaxprob"] or config["save_prediction_logits"]:
         os.makedirs(config["base_path"] + "preds")
 
@@ -241,6 +254,7 @@ def main(config, Model, data, base_path, _run):
     results = {}
     results_post = {}
     model.eval()
+    pool = multiprocessing.Pool(processes=PROCESSES)
     with torch.no_grad():
         # Assuming that batch_size is 1
         for test_i in range(len(test_data)):
@@ -250,9 +264,9 @@ def main(config, Model, data, base_path, _run):
             Y = Y.cpu().numpy() # NBWHC
 
             if config["save_prediction_mask"]:
-                _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
+                #_out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
+                _out = np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1) 
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_mask.nii.gz")
-
             if config["save_prediction_logits"] and len(output) > 1:
                 logits = output[1].cpu().numpy()
                 _out = np.moveaxis(np.moveaxis(np.reshape(logits, (2,18,256,256)), 1, -1), 0, -1)
@@ -262,19 +276,26 @@ def main(config, Model, data, base_path, _run):
                 _out = np.moveaxis(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), 0, -1)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_softmaxprob.nii.gz")
 
-            results[id_] = Metric(pred, Y).all()
+            #results[id_] = Metric(pred, Y).all()
+            results[id_] = pool.apply_async(Metric(pred, Y).all)
 
             # Results after post-processing
             if config["removeSmallIslands_thr"] != -1:
                 pred = removeSmallIslands(pred, thr=config["removeSmallIslands_thr"])
-                results_post[id_] = Metric(pred, Y).all()
+                results_post[id_] = pool.apply_async(Metric(pred, Y).all)
+                #results_post[id_] = Metric(pred, Y).all()
 
+
+    for k in results:
+        results[k] = results[k].get()
     with open(config["base_path"] + "results.json", "w") as f:
         f.write(json.dumps(results))
 
     if config["removeSmallIslands_thr"] != -1:
+        for k in results_post:
+            results_post[k] = results_post[k].get()
         # Results after post-processing
         with open(config["base_path"] + "results-post.json", "w") as f:
             f.write(json.dumps(results_post))
-
+    
     log("End")
