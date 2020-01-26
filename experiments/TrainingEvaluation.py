@@ -56,6 +56,8 @@ def main(config, Model, data, base_path, _run):
     # Data
     tr_data = data("train", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
     val_data = data("validation", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
+    #tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
+    #val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
 
     # Calculating compactness in the training data
     """
@@ -228,6 +230,8 @@ def main(config, Model, data, base_path, _run):
         writer.add_scalar("val_dice", val_dice, e)
         writer.close()
 
+        log("Epoch: {}. Loss: {}. Val Loss: {}".format(e, tr_loss, val_loss))
+
         # Reduce learning rate if needed, and stop if limit is reached.
         if lr_scheduler != None:
             lr_scheduler.step(val_loss)
@@ -235,8 +239,6 @@ def main(config, Model, data, base_path, _run):
             if lr_scheduler.limit_cnt < 0:
                 keep_training = False
                 lr_scheduler.limit_cnt = lr_scheduler.limit # Needed if we run ex. more than once!
-
-        log("Epoch: {}. Loss: {}. Val Loss: {}".format(e, tr_loss, val_loss))
 
         # Save model after every epoch
         torch.save(model.state_dict(), config["base_path"] + "model/model-" + str(e))

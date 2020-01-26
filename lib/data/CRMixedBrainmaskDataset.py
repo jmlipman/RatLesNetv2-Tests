@@ -87,11 +87,6 @@ class CRMixedBrainmaskDataset(torch.utils.data.Dataset):
                 self.list.extend(data[self.tr_size+1:])
             self.list += nolesions
 
-        for l in sorted(self.list):
-            print(l)
-        raise Exception("llego")
-
-        self.list = nolesions
         # Randomize
         random.shuffle(self.list)
 
@@ -171,7 +166,6 @@ class CRMixedBrainmaskDataset(torch.utils.data.Dataset):
             Y[0,0] = 1.0-((np.sum(Y[0,1:], axis=0))>0)
         else:
             Y[0,0] = 1.0-Y[0,1]
-
 
         W = self._computeWeight(Y)
 

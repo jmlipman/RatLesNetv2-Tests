@@ -4,12 +4,13 @@ from experiments.TrainingEvaluation import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedBrainmaskDataset import CRMixedBrainmaskDataset as DataMixed
+#from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
 import itertools, os
 import time
 import numpy as np
 from lib.losses import *
 from lib.utils import he_normal
-from lib.lr_scheduler import CustomReduceLROnPlateau
+from lib.lr_scheduler import *
 import argparse
 from sacred import SETTINGS
 SETTINGS.CONFIG.READ_ONLY_CONFIG = False
@@ -63,7 +64,7 @@ config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
 config["config.loss_fn"] = CrossEntropyDiceLoss
-config["config.opt"] = torch.optim.Adam
+config["config.opt"] = torch.optim.AdamW
 config["config.classes"] = 2
 
 ### Model architecture
@@ -111,15 +112,18 @@ config["config.lr_scheduler"] = CustomReduceLROnPlateau(
         limit=config["config.lr_scheduler_limit"],
         verbose=config["config.lr_scheduler_verbose"]
         )
-config["config.lr_scheduler"] = None
+config["config.lr_scheduler"] = CustomReduceLR(
+        epochs=[150, 250],
+        factors=[0.1, 0.1]
+        )
 
 ### Regularization
 config["config.alpha_length"] = 0.000001 # Length regularization
 config["config.weight_decay"] = 0
 
 ### Data-related
-config["config.brainmask"] = True
-config["config.overlap"] = True
+config["config.brainmask"] = False
+config["config.overlap"] = False
 
 
 ####### Not migrated confs:
@@ -129,44 +133,28 @@ config["config.L2"] = None
 ### Early stopping
 config["config.early_stopping_thr"] = 999
 
-### Weight Decay
-# TODO I am not sure I need all of this now, since weight decay can be
-# set in a much easier way now.
-#config["config.weight_decay"] = None # None will use Adam
-# Every X epochs, it will decrease Y rate.
-#config["config.wd_epochs"] = 200
-#config["config.wd_rate"] = 0.1 # Always 0.1
-#config["config.wd_epochs"] = [int(len(data.getFiles("training"))*config["config.wd_epochs"]*i/config["config.batch"]) for i in range(1, int(config["config.epochs"]/config["config.wd_epochs"]+1))]
-#config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
 #####################
 
-BASE_PATH += "multilabel/"
+BASE_PATH += "multilabel-hyperparam_tunning/"
 
-#lrs = [1e-4, 1e-5]
-#concats = [1, 2, 3, 4, 5, 6]
+opts = [torch.optim.Adam, torch.optim.AdamW]
+wds = [0.001, 0.0001]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 #datas = [DataOrig, DataMixed]
 
-#params = [datas]
-#all_configs = list(itertools.product(*params))
+params = [opts, wds]
+all_configs = list(itertools.product(*params))
 ci = 0
 
-#all_configs = [CrossEntropyLoss, DiceLoss, CrossEntropyDiceLoss, WeightedCrossEntropy_ClassBalance, WeightedCrossEntropy_DistanceMap]
-all_configs = [0.001, 0.0001]
+#all_configs = [0.001, 0.0001]
 
-for wd in all_configs:
+for wd, opt in all_configs:
 
     for i in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "delete"
-        if not config["config.lr_scheduler"] is None:
-            exp_name += "_ES"
-        #if data == DataOrig:
-        #    exp_name += "_orig"
-        #else:
-        #    exp_name += ""
+        exp_name = opt.__name__+"_WD"+str(wd)
 
         try:
             print("Trying: "+exp_name)
@@ -175,10 +163,8 @@ for wd in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
+            config["config.opt"] = opt
             config["config.weight_decay"] = wd
-            #config["data"] = data
-            #config["config.concat"] = concat
-            #config["config.skip_connection"] = skip
 
             ex.run(config_updates=config)
 
