@@ -155,11 +155,11 @@ for dat in all_configs:
     for i in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "VoxResNet_"
+        exp_name = "VoxResNet"
         if dat == DataOrig:
-            exp_name += "orig"
+            exp_name += "_orig"
         elif dat == DataMixed:
-            exp_name += "mixed"
+            exp_name += "_mixed"
 
 
         try:

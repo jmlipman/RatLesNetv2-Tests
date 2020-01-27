@@ -266,8 +266,7 @@ def main(config, Model, data, base_path, _run):
             Y = Y.cpu().numpy() # NBWHC
 
             if config["save_prediction_mask"]:
-                #_out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
-                _out = np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1) 
+                _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_mask.nii.gz")
             if config["save_prediction_logits"] and len(output) > 1:
                 logits = output[1].cpu().numpy()
@@ -286,6 +285,9 @@ def main(config, Model, data, base_path, _run):
                 pred = removeSmallIslands(pred, thr=config["removeSmallIslands_thr"])
                 results_post[id_] = pool.apply_async(Metric(pred, Y).all)
                 #results_post[id_] = Metric(pred, Y).all()
+                if config["save_prediction_mask"]:
+                    _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
+                    nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_mask.nii.gz")
 
 
     for k in results:
