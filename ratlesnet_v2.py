@@ -53,11 +53,11 @@ else:
 
 ### Fixed configuration
 config = {}
-config["data"] = DataMixed
+#config["data"] = DataMixed
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 400
+config["config.epochs"] = 700
 config["config.batch"] = 1
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
@@ -79,18 +79,18 @@ config["config.block_convs"] = 2 # Number of convolutions within block
 # The following brains will be saved during validation. If not wanted, empty list.
 config["config.pc_name"] = pc_name
 if pc_name == "FUJ":
-    config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
+    config["config.save_validation"] = []
     BASE_PATH = "/home/miguelv/data/out/RAW/"
 elif pc_name == "nmrcs3":
-    config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+    config["config.save_validation"] = []
     BASE_PATH = "/home/miguelv/data/out/RAW/"
 elif pc_name == "sampo-tipagpu1":
-    config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+    config["config.save_validation"] = []
     BASE_PATH = "/home/users/miguelv/data/out/RAW/"
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20. If not, -1
@@ -117,6 +117,7 @@ config["config.lr_scheduler"] = CustomReduceLR(
         epochs=[150, 250],
         factors=[0.1, 0.1]
         )
+config["config.lr_scheduler"] = None
 
 ### Regularization
 config["config.alpha_length"] = 0.000001 # Length regularization
@@ -136,10 +137,10 @@ config["config.early_stopping_thr"] = 999
 
 #####################
 
-BASE_PATH += "multilabel-hyperparam_tunning/"
+BASE_PATH += "RatLesNetv2_ablation/"
 
-opts = [torch.optim.RAdam]
-wds = [0.0]
+#opts = [torch.optim.RAdam]
+#wds = [0.0]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 #datas = [DataOrig, DataMixed]
@@ -148,14 +149,21 @@ params = [opts, wds]
 all_configs = list(itertools.product(*params))
 ci = 0
 
-#all_configs = [0.001, 0.0001]
+all_configs = [DataOrig, DataMixed]
 
-for opt, wd in all_configs:
+#for opt, wd in all_configs:
+for dat in all_configs:
 
     for i in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = opt.__name__+"_WD"+str(wd)
+        #exp_name = opt.__name__+"_WD"+str(wd)
+        exp_name = "baseline"
+        if dat == DataOrig:
+            ex_name += "_homogeneous"
+        elif dat == DataMixed:
+            ex_name += "_heterogeneous"
+
 
         try:
             print("Trying: "+exp_name)
@@ -164,8 +172,6 @@ for opt, wd in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["config.opt"] = opt
-            config["config.weight_decay"] = wd
 
             ex.run(config_updates=config)
 

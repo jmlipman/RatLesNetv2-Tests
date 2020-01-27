@@ -90,7 +90,6 @@ class CustomReduceLR(object):
         self.losses.append(loss)
 
         if self.curr_factor_i < len(self.epochs) and len(self.losses) == self.epochs[self.curr_factor_i]:
-            print(len(self.losses), self.epochs[self.curr_factor_i])
             for group in self.optimizer.param_groups:
                 group["lr"] *= self.factors[self.curr_factor_i]
             if self.verbose and self.limit_cnt > -1:
