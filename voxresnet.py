@@ -87,10 +87,13 @@ config["config.dim_reduc"] = False
 config["config.pc_name"] = pc_name
 if pc_name == "FUJ":
     config["config.save_validation"] = []
+    BASE_PATH = "/home/miguelv/data/out/RAW/"
 elif pc_name == "nmrcs3":
     config["config.save_validation"] = []
+    BASE_PATH = "/home/miguelv/data/out/RAW/"
 elif pc_name == "sampo-tipagpu1":
     config["config.save_validation"] = []
+    BASE_PATH = "/home/users/miguelv/data/out/RAW/"
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
@@ -134,15 +137,7 @@ config["config.L2"] = None
 ### Early stopping
 config["config.early_stopping_thr"] = 999
 
-### Weight Decay
-# TODO I am not sure I need all of this now, since weight decay can be
-# set in a much easier way now.
-#config["config.weight_decay"] = None # None will use Adam
-# Every X epochs, it will decrease Y rate.
-#config["config.wd_epochs"] = 200
-#config["config.wd_rate"] = 0.1 # Always 0.1
-#config["config.wd_epochs"] = [int(len(data.getFiles("training"))*config["config.wd_epochs"]*i/config["config.batch"]) for i in range(1, int(config["config.epochs"]/config["config.wd_epochs"]+1))]
-#config["config.wd_rate"] = [1/(10**i) for i in range(len(config["config.wd_epochs"])+1)]
+BASE_PATH += "VoxResNet/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
