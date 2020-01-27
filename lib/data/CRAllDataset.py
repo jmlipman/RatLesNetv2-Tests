@@ -7,7 +7,7 @@ from lib.losses import *
 
 class CRAllDataset(torch.utils.data.Dataset):
 
-    def __init__(self, split, loss=None, dev=None):
+    def __init__(self, split, loss=None, brainmask=None, overlap=None, dev=None):
         """This class will retrieve the whole data set that we have.
            For training/validation it is using 02NOV2016 study.
            For testing it is using the remaining studies.
@@ -19,6 +19,7 @@ class CRAllDataset(torch.utils.data.Dataset):
             `loss`: loss function used in the code. This is used to compute
              the weights because different loss functions use diff. weights.
             `dev`: device where the data will be brought (cuda/cpu)
+            `brainmask, overlap`: Nothing, for compatibility reasons.
         """
         self.split = split
         self.loss = loss

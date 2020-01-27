@@ -83,6 +83,7 @@ config["config.dim_reduc"] = False
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
+config["config.pc_name"] = pc_name
 if pc_name == "FUJ":
     config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
 elif pc_name == "nmrcs3":

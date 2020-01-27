@@ -77,6 +77,7 @@ config["config.block_convs"] = 2 # Number of convolutions within block
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
+config["config.pc_name"] = pc_name
 if pc_name == "FUJ":
     config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
     BASE_PATH = "/home/miguelv/data/out/RAW/"
@@ -89,7 +90,7 @@ elif pc_name == "sampo-tipagpu1":
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
-config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
+config["config.save_prediction_mask"] = False # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section.
 config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20. If not, -1
@@ -137,8 +138,8 @@ config["config.early_stopping_thr"] = 999
 
 BASE_PATH += "multilabel-hyperparam_tunning/"
 
-opts = [torch.optim.Adam, torch.optim.AdamW]
-wds = [0.001, 0.0001]
+opts = [torch.optim.RAdam]
+wds = [0.0]
 #skips = [False, "sum", "concat"]
 #fsizes = [3, 6, 12, 18, 22, 25]
 #datas = [DataOrig, DataMixed]
@@ -149,7 +150,7 @@ ci = 0
 
 #all_configs = [0.001, 0.0001]
 
-for wd, opt in all_configs:
+for opt, wd in all_configs:
 
     for i in range(3):
         ci += 1

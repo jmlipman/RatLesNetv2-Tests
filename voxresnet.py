@@ -4,7 +4,8 @@ from experiments.TrainingEvaluation import ex
 #from experiments.VoxelInfluenceTest import ex
 #from experiments.lib.util import Twitter
 from lib.models.VoxResNet import VoxResNet
-from lib.data.CRAllDataset import CRAllDataset as Data
+from lib.data.CRAllDataset import CRAllDataset as DataOrig
+from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
 #from lib.data.LeidenDataset import LeidenDataset as Data
 import itertools, os
 import time, torch
@@ -58,11 +59,11 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #data = Data
 #data.split(folds=1, prop=[0.7, 0.2, 0.1]) # 0.8
 config = {}
-config["data"] = Data
+#config["data"] = Data
 config["Model"] = VoxResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 0 # Originally 700
+config["config.epochs"] = 700 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -83,12 +84,13 @@ config["config.dim_reduc"] = False
 
 ### Save validation results
 # The following brains will be saved during validation. If not wanted, empty list.
+config["config.pc_name"] = pc_name
 if pc_name == "FUJ":
-    config["config.save_validation"] = ["02NOV2016_2h_40", "02NOV2016_24h_43"]
+    config["config.save_validation"] = []
 elif pc_name == "nmrcs3":
-    config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+    config["config.save_validation"] = []
 elif pc_name == "sampo-tipagpu1":
-    config["config.save_validation"] = ["02NOV2016_24h_5", "02NOV2016_2h_6"]
+    config["config.save_validation"] = []
 else:
     raise Exception("Unknown PC: "+pc_name)
 config["config.save_npy"] = False
@@ -99,7 +101,7 @@ config["config.removeSmallIslands_thr"] = 20 # Remove independent connected comp
 
 ### Loading Weights
 #config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_mixed/1/model/model-699"
-#config["config.model_state"] = ""
+config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
 config["config.lr_scheduler_patience"] = 4
@@ -119,7 +121,11 @@ config["config.lr_scheduler"] = None
 
 ### Regularization
 config["config.alpha_length"] = 0.000001
+config["config.weight_decay"] = 0
 
+### Data-related
+config["config.brainmask"] = None
+config["config.overlap"] = None
 
 ####### Not migrated confs:
 ### L2 regularization
@@ -147,16 +153,19 @@ config["config.early_stopping_thr"] = 999
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [1] # Run 5 times
+all_configs = [DataOrig, DataMixed] # Run 5 times
 
-for lr in all_configs:
+for dat in all_configs:
 
     for i in range(3):
         ci += 1
         # Name of the experiment and path
-        exp_name = "VoxResNet_orig"
-        if not config["config.lr_scheduler"] is None:
-            exp_name += "_ES"
+        exp_name = "VoxResNet_"
+        if dat == DataOrig:
+            exp_name += "orig"
+        elif dat == DataMixed:
+            exp_name += "mixed"
+
 
         try:
             print("Trying: "+exp_name)
@@ -165,12 +174,7 @@ for lr in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_orig/"+str(i+1)+"/model/model-699"
-            #config["config.lr"] = lr
-            #config["config.growth_rate"] = fsize
-            #config["config.concat"] = concat
-            #config["config.skip_connection"] = skip
-            #config["config.lambda_length"] = l2
+            config["data"] = dat
 
             ex.run(config_updates=config)
 

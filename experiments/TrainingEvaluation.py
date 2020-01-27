@@ -151,9 +151,9 @@ def main(config, Model, data, base_path, _run):
             pred = output[0]
 
             if W is None:
-                tr_loss_tmp = loss_fn(pred, Y, config)
+                tr_loss_tmp = loss_fn(output, Y, config)
             else:
-                tr_loss_tmp = loss_fn(pred, Y, config, W)
+                tr_loss_tmp = loss_fn(output, Y, config, W)
             tr_loss += tr_loss_tmp
             tr_islands += np.sum(Metric(pred.detach().cpu(), None).islands())
 
@@ -201,9 +201,9 @@ def main(config, Model, data, base_path, _run):
                 output = model(X)
                 pred = output[0]
                 if W is None:
-                    val_loss_tmp = loss_fn(pred, Y, config)
+                    val_loss_tmp = loss_fn(output, Y, config)
                 else:
-                    val_loss_tmp = loss_fn(pred, Y, config, W)
+                    val_loss_tmp = loss_fn(output, Y, config, W)
                 val_loss += val_loss_tmp
                 m = Metric(pred.cpu().numpy(), Y.cpu().numpy())
                 val_islands += np.sum(m.islands())

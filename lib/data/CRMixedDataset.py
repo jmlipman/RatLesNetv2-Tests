@@ -7,7 +7,7 @@ from lib.losses import *
 
 class CRMixedDataset(torch.utils.data.Dataset):
 
-    def __init__(self, split, loss=None, dev=None):
+    def __init__(self, split, loss=None, brainmask=None, overlap=None, dev=None):
         """This class will have as a training set 5 lesion-containing scans
            of each time-point. Validation will be 1 lesion-containing scan per
            time-point. Test will be the rest
@@ -17,7 +17,7 @@ class CRMixedDataset(torch.utils.data.Dataset):
             `loss`: loss function used in the code. This is used to compute
              the weights because different loss functions use diff. weights.
             `dev`: device where the data will be brought (cuda/cpu)
-            `seg`: Which segmentation is retrieving.
+            `brainmask, overlap`: Nothing, for compatibility reasons.
         """
         self.split = split
         self.loss = loss

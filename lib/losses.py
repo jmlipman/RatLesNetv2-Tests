@@ -16,38 +16,41 @@ def VoxResNet_CE(out, y_true, config):
 
 #def CrossEntropyLoss(y_pred, y_true):
 #    return -torch.mean(y_true * torch.log(y_pred + 1e-15))
-def CrossEntropyLoss(y_pred, y_true, config, weights=1):
+def CrossEntropyLoss(output, y_true, config, weights=1):
     """Regular Cross Entropy loss function.
        It is possible to use weights with the shape of BWHD (no channel).
 
        Args:
-        `y_pred`: predictions after softmax, BCWHD.
+        `output`: Output of the model.
         `y_true`: labels one-hot encoded, BCWHD.
         `weights`: weights tensor, BWHD.
 
     """
+    y_pred = output[0]
     ce = torch.sum(y_true * torch.log(y_pred + 1e-15), axis=1)
     return -torch.mean(ce*weights)
 
 
-def DiceLoss(y_pred, y_true, config):
+def DiceLoss(output, y_true, config):
     """Binary Dice loss function.
 
        Args:
-        `y_pred`: predictions after softmax, BCWHD.
+        `output`: Output of the model.
         `y_true`: labels one-hot encoded, BCWHD.
     """
+    y_pred = output[0]
     num = 2 * torch.sum(y_pred * y_true, axis=(1,2,3,4))
     denom = torch.sum(torch.pow(y_pred, 2) + torch.pow(y_true, 2), axis=(1,2,3,4))
     return (1 - torch.sum(num / (denom + 1e-6)))
 
-def CrossEntropyDiceLoss(y_pred, y_true, config):
+def CrossEntropyDiceLoss(output, y_true, config):
     """Cross Entropy combined with Dice Loss.
 
        Args:
-        `y_pred`: predictions after softmax, BCWHD.
+        `output`: Output of the model.
         `y_true`: labels one-hot encoded, BCWHD.
     """
+    y_pred = output[0]
     return CrossEntropyLoss(y_pred, y_true, config) + DiceLoss(y_pred, y_true, config)
 
 def WeightedCrossEntropy_ClassBalance(y_pred, y_true, config, weights):
