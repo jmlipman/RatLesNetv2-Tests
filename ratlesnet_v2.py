@@ -63,7 +63,7 @@ config["config.initB"] = torch.nn.init.zeros_
 config["config.act"] = torch.nn.ReLU()
 #config["config.loss_fn"] = torch.nn.BCELoss()
 config["config.loss_fn"] = CrossEntropyDiceLoss
-config["config.opt"] = torch.optim.AdamW
+config["config.opt"] = torch.optim.Adam
 config["config.classes"] = 2
 
 ### Model architecture
