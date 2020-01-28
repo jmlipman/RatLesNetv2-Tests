@@ -145,8 +145,8 @@ BASE_PATH += "RatLesNetv2_ablation/"
 #fsizes = [3, 6, 12, 18, 22, 25]
 #datas = [DataOrig, DataMixed]
 
-params = [opts, wds]
-all_configs = list(itertools.product(*params))
+#params = [opts, wds]
+#all_configs = list(itertools.product(*params))
 ci = 0
 
 all_configs = [DataOrig, DataMixed]
@@ -160,9 +160,9 @@ for dat in all_configs:
         #exp_name = opt.__name__+"_WD"+str(wd)
         exp_name = "baseline"
         if dat == DataOrig:
-            ex_name += "_homogeneous"
+            exp_name += "_homogeneous"
         elif dat == DataMixed:
-            ex_name += "_heterogeneous"
+            exp_name += "_heterogeneous"
 
 
         try:
@@ -172,6 +172,7 @@ for dat in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
+            config["data"] = dat
 
             ex.run(config_updates=config)
 
