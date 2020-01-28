@@ -3,8 +3,7 @@ from experiments.TrainingEvaluation import ex
 #from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
-from lib.data.CRMixedBrainmaskDataset import CRMixedBrainmaskDataset as DataMixed
-#from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
+from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
 import itertools, os
 import time
 import numpy as np
