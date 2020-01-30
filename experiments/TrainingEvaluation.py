@@ -301,4 +301,8 @@ def main(config, Model, data, base_path, _run):
         with open(config["base_path"] + "results-post.json", "w") as f:
             f.write(json.dumps(results_post))
     
+    pool.close()
+    pool.join()
+    pool.terminate()
+
     log("End")
