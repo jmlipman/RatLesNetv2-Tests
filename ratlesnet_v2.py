@@ -4,6 +4,7 @@ from experiments.TrainingEvaluation import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
 from lib.data.CRMixedDataset import CRMixedDataset as DataMixed
+from lib.data.CRMixed2perStudyDataset import CRMixed2perStudyDataset as DataMixed2perStudy
 import itertools, os
 import time
 import numpy as np
@@ -136,7 +137,8 @@ config["config.early_stopping_thr"] = 999
 
 #####################
 
-BASE_PATH += "RatLesNetv2_ablation/"
+#BASE_PATH += "RatLesNetv2/"
+BASE_PATH += "delete/"
 
 #opts = [torch.optim.RAdam]
 #wds = [0.0]
