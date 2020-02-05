@@ -89,21 +89,6 @@ class CRMixed2perStudyDataset(torch.utils.data.Dataset):
                 idx = list(idx_[1:int(len(idx_)/2)]) + list(idx_[int(len(idx_)/2+1):-1])
                 self.list.extend([brains[study_timepoint][i_] for i_ in idx])
 
-        nolesions = sorted(nolesions)
-        for timepoint in brains.keys():
-            brains[timepoint] = sorted(brains[timepoint])
-
-        if split == "train":
-            for data in brains.values():
-                self.list.extend(data[:5])
-        elif split == "validation":
-            for data in brains.values():
-                self.list.append(data[5])
-        else:
-            for data in brains.values():
-                self.list.extend(data[6:])
-            self.list += nolesions
-
         # Randomize
         random.shuffle(self.list)
 
