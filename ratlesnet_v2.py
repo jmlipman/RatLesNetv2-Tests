@@ -57,7 +57,7 @@ config = {}
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700
+config["config.epochs"] = 0
 config["config.batch"] = 1
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
@@ -93,11 +93,11 @@ config["config.save_npy"] = False
 config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section.
-config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20. If not, -1
+config["config.removeSmallIslands_thr"] = -1 # Remove independent connected components. Use 20. If not, -1
 
 ### Loading Weights
 #config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/1-ratlesnetv2/baseline_mixed/1/model/model-699"
-config["config.model_state"] = ""
+#config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
 config["config.lr_scheduler_patience"] = 4
@@ -137,8 +137,8 @@ config["config.early_stopping_thr"] = 999
 
 #####################
 
-#BASE_PATH += "RatLesNetv2/"
-BASE_PATH += "delete/"
+BASE_PATH += "ModelComparison/"
+#BASE_PATH += "delete/"
 
 #opts = [torch.optim.RAdam]
 #wds = [0.0]
@@ -159,7 +159,7 @@ for dat in all_configs:
         ci += 1
         # Name of the experiment and path
         #exp_name = opt.__name__+"_WD"+str(wd)
-        exp_name = "baseline"
+        exp_name = "RatLesNetv2"
         if dat == DataOrig:
             exp_name += "_homogeneous"
         elif dat == DataMixed:
@@ -173,6 +173,7 @@ for dat in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
+            config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/8-rerun_everything/1-comparisonNetworks/results/RatLesNetv2/" + exp_name + "/" + str(i+1) + "/model/model-699"
             config["data"] = dat
 
             ex.run(config_updates=config)

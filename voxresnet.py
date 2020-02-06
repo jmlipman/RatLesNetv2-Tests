@@ -63,7 +63,7 @@ config = {}
 config["Model"] = VoxResNet
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 700 # Originally 700
+config["config.epochs"] = 0 # Originally 700
 config["config.batch"] = 1
 #config["config.initW"] = torch.nn.init.kaiming_normal_
 config["config.initW"] = he_normal
@@ -100,7 +100,7 @@ config["config.save_npy"] = False
 config["config.save_prediction_mask"] = True # Save masks on Testing section. (mask = np.argmax(...))
 config["config.save_prediction_softmaxprob"] = False # Save softmax predictions on Testing section.
 config["config.save_prediction_logits"] = False # Save logits of the predictions on Testing section
-config["config.removeSmallIslands_thr"] = 20 # Remove independent connected components. Use 20.
+config["config.removeSmallIslands_thr"] = -1 # Remove independent connected components. Use 20.
 
 ### Loading Weights
 #config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/0-voxrat1/700ep/VoxResNet_mixed/1/model/model-699"
@@ -137,7 +137,8 @@ config["config.L2"] = None
 ### Early stopping
 config["config.early_stopping_thr"] = 999
 
-BASE_PATH += "VoxResNet/"
+BASE_PATH += "ModelComparison/"
+#BASE_PATH += "delete/"
 
 #lrs = [1e-4, 1e-5]
 #concats = [1, 2, 3, 4, 5, 6]
@@ -157,9 +158,9 @@ for dat in all_configs:
         # Name of the experiment and path
         exp_name = "VoxResNet"
         if dat == DataOrig:
-            exp_name += "_orig"
+            exp_name += "_homogeneous"
         elif dat == DataMixed:
-            exp_name += "_mixed"
+            exp_name += "_heterogeneous"
 
 
         try:
@@ -169,6 +170,7 @@ for dat in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
+            config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/8-rerun_everything/1-comparisonNetworks/results/VoxResNet/" + exp_name + "/" + str(i+1) + "/model/model-699"
             config["data"] = dat
 
             ex.run(config_updates=config)
