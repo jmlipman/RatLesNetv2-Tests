@@ -13,7 +13,6 @@ from lib.models.VoxResNet import VoxResNet
 from lib.metric import Metric
 import multiprocessing
 
-PROCESSES = 6 # For post-processing
 
 def plot_grad_flow(named_parameters):
     '''Plots the gradients flowing through different layers in the net during training.
@@ -44,10 +43,11 @@ def plot_grad_flow(named_parameters):
                 Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
     plt.show()
 
-ex = Experiment("TrainingEvaluation")
+ex = Experiment("Overfitting")
 
 @ex.main
 def main(config, Model, data, base_path, _run):
+    PROCESSES = 6 # For post-processing
     log("Start "+ex.get_experiment_info()["name"])
 
     base_path = base_path + str(_run._id) + "/"
@@ -55,7 +55,7 @@ def main(config, Model, data, base_path, _run):
 
     # Data
     tr_data = data("train", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
-    val_data = data("validation", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
+    #val_data = data("validation", loss=config["loss_fn"], brainmask=config["brainmask"], overlap=config["overlap"], dev=config["device"])
     #tr_data = data("train", loss=config["loss_fn"], dev=config["device"])
     #val_data = data("validation", loss=config["loss_fn"], dev=config["device"])
 
@@ -101,8 +101,7 @@ def main(config, Model, data, base_path, _run):
 
 
     # Create folder for saving the model and validation results
-    if len(config["save_validation"]) > 0:
-        os.makedirs(config["base_path"] + "val_evol")
+    os.makedirs(config["base_path"] + "val_evol")
     os.makedirs(config["base_path"] + "model")
 
     # Config
@@ -131,20 +130,6 @@ def main(config, Model, data, base_path, _run):
     if config["model_state"] != "":
         log("Loading previous model")
         model.load_state_dict(torch.load(config["model_state"]))
-
-    if config["pc_name"] != "sampo-tipagpu1":
-        total, used = os.popen('"<path\to\NVSMI>\nvidia-smi" --query-gpu=memory.total,memory.used --format=csv,nounits,noheader').read().split(",")
-        with open("memory", "a") as f:
-            f.write(str(total)+"\n")
-            f.write(str(used)+"\n")
-
-            total = int(total)
-            used = int(used)
-                        
-            max_mem = int(total * 0.9)
-            block_mem = max_mem - used
-                                        
-            hold_on_memory = torch.rand((256,1024,block_mem)).cuda()
 
     # Counters and flags
     e = 0 # Epoch counter
@@ -209,8 +194,8 @@ def main(config, Model, data, base_path, _run):
         val_i = 0
         model.eval()
         with torch.no_grad():
-            while val_i < len(val_data) and keep_training:
-                X, Y, id_, W = val_data[val_i]
+            while val_i < len(tr_data) and keep_training:
+                X, Y, id_, W = tr_data[val_i]
 
                 output = model(X)
                 pred = output[0]
@@ -220,27 +205,24 @@ def main(config, Model, data, base_path, _run):
                     val_loss_tmp = loss_fn(output, Y, config, W)
                 val_loss += val_loss_tmp
                 m = Metric(pred.cpu().numpy(), Y.cpu().numpy())
-                val_islands += np.sum(m.islands())
                 val_dice += m.dice()[:,1] # Lesion Dice
 
-                if id_ in config["save_validation"]:
-                    name = id_ + "_" + str(e)
-                    pred = np.moveaxis(np.moveaxis(np.reshape(pred.cpu().numpy(), (2,18,256,256)), 1, -1), 0, -1)
-                    if config["save_npy"]:
-                        np.save(config["base_path"] + "val_evol/" + name, pred)
-                    pred = np.argmax(pred, axis=-1)
-                    nib.save(nib.Nifti1Image(pred, np.eye(4)), config["base_path"] + "val_evol/" + name + ".nii.gz")
+                # Save all training samples
+                name = id_ + "_" + str(e)
+                pred = np.moveaxis(np.moveaxis(np.reshape(pred.cpu().numpy(), (2,18,256,256)), 1, -1), 0, -1)
+                if config["save_npy"]:
+                    np.save(config["base_path"] + "val_evol/" + name, pred)
+                pred = np.argmax(pred, axis=-1)
+                nib.save(nib.Nifti1Image(pred, np.eye(4)), config["base_path"] + "val_evol/" + name + ".nii.gz")
 
                 val_i += 1
 
-        val_loss /= len(val_data)
-        val_islands /= len(val_data)
-        val_dice /= len(val_data)
+        val_loss /= len(tr_data)
+        val_dice /= len(tr_data)
 
         # Tensorboard summaries
         writer = SummaryWriter(tb_path)
         writer.add_scalar("val_loss", val_loss, e)
-        writer.add_scalar("val_islands", val_islands, e)
         writer.add_scalar("val_dice", val_dice, e)
         writer.close()
 
@@ -256,8 +238,8 @@ def main(config, Model, data, base_path, _run):
 
         # Save model after every epoch
         torch.save(model.state_dict(), config["base_path"] + "model/model-" + str(e))
-        if e > 4 and os.path.exists(config["base_path"] + "model/model-"+str(e-5)):
-            os.remove(config["base_path"] + "model/model-"+str(e-5))
+        #if e > 4 and os.path.exists(config["base_path"] + "model/model-"+str(e-5)):
+        #    os.remove(config["base_path"] + "model/model-"+str(e-5))
 
         e += 1
 
@@ -270,8 +252,7 @@ def main(config, Model, data, base_path, _run):
     results = {}
     results_post = {}
     model.eval()
-    if config["pc_name"] != "sampo-tipagpu1": # Sampo seems to not deal well with multiprocess
-        pool = multiprocessing.Pool(processes=PROCESSES)
+    pool = multiprocessing.Pool(processes=PROCESSES)
     with torch.no_grad():
         # Assuming that batch_size is 1
         for test_i in range(len(test_data)):
@@ -292,40 +273,32 @@ def main(config, Model, data, base_path, _run):
                 _out = np.moveaxis(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), 0, -1)
                 nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_softmaxprob.nii.gz")
 
-            if config["pc_name"] != "sampo-tipagpu1":
-                results[id_] = pool.apply_async(Metric(pred, Y).all)
-            else:
-                results[id_] = Metric(pred, Y).all()
+            #results[id_] = Metric(pred, Y).all()
+            results[id_] = pool.apply_async(Metric(pred, Y).all)
 
             # Results after post-processing
             if config["removeSmallIslands_thr"] != -1:
-                pred_post = pred.copy()
-                pred_post = removeSmallIslands(pred_post, thr=config["removeSmallIslands_thr"])
-                if config["pc_name"] != "sampo-tipagpu1":
-                    results_post[id_] = pool.apply_async(Metric(pred_post, Y).all)
-                else:
-                    results_post[id_] = Metric(pred_post, Y).all()
+                pred = removeSmallIslands(pred, thr=config["removeSmallIslands_thr"])
+                results_post[id_] = pool.apply_async(Metric(pred, Y).all)
+                #results_post[id_] = Metric(pred, Y).all()
                 if config["save_prediction_mask"]:
-                    _out = np.argmax(np.moveaxis(np.reshape(pred_post, (2,18,256,256)), 1, -1), axis=0)
+                    _out = np.argmax(np.moveaxis(np.reshape(pred, (2,18,256,256)), 1, -1), axis=0)
                     nib.save(nib.Nifti1Image(_out, np.eye(4)), config["base_path"] + "preds/" + id_ + "_mask.nii.gz")
 
-    if config["pc_name"] != "sampo-tipagpu1":
-        for k in results:
-            results[k] = results[k].get()
+    for k in results:
+        results[k] = results[k].get()
     with open(config["base_path"] + "results.json", "w") as f:
         f.write(json.dumps(results))
 
     if config["removeSmallIslands_thr"] != -1:
-        if config["pc_name"] != "sampo-tipagpu1":
-            for k in results_post:
-                results_post[k] = results_post[k].get()
+        for k in results_post:
+            results_post[k] = results_post[k].get()
         # Results after post-processing
         with open(config["base_path"] + "results-post.json", "w") as f:
             f.write(json.dumps(results_post))
     
-    if config["pc_name"] != "sampo-tipagpu1":
-        pool.close()
-        pool.join()
-        pool.terminate()
+    pool.close()
+    pool.join()
+    pool.terminate()
 
     log("End")

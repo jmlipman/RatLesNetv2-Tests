@@ -1,5 +1,6 @@
 from sacred.observers import FileStorageObserver
-from experiments.TrainingEvaluation import ex
+#from experiments.TrainingEvaluation import ex
+from experiments.Overfitting import ex
 #from experiments.ReceptiveField import ex
 from lib.models.RatLesNetv2 import *
 from lib.data.CRAllDataset import CRAllDataset as DataOrig
@@ -57,7 +58,7 @@ config = {}
 config["Model"] = RatLesNetv2
 config["config.device"] = device
 config["config.lr"] = 1e-4
-config["config.epochs"] = 0
+config["config.epochs"] = 2000
 config["config.batch"] = 1
 config["config.initW"] = he_normal
 config["config.initB"] = torch.nn.init.zeros_
@@ -97,7 +98,7 @@ config["config.removeSmallIslands_thr"] = -1 # Remove independent connected comp
 
 ### Loading Weights
 #config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/2-baseline/1-ratlesnetv2/baseline_mixed/1/model/model-699"
-#config["config.model_state"] = ""
+config["config.model_state"] = ""
 
 ### LR Scheduler. Reduce learning rate on plateau
 config["config.lr_scheduler_patience"] = 4
@@ -137,7 +138,7 @@ config["config.early_stopping_thr"] = 999
 
 #####################
 
-BASE_PATH += "ModelComparison/"
+BASE_PATH += "Overfitting/"
 #BASE_PATH += "delete/"
 
 #opts = [torch.optim.RAdam]
@@ -150,12 +151,12 @@ BASE_PATH += "ModelComparison/"
 #all_configs = list(itertools.product(*params))
 ci = 0
 
-all_configs = [DataOrig, DataMixed]
+all_configs = [DataOrig]
 
 #for opt, wd in all_configs:
 for dat in all_configs:
 
-    for i in range(3):
+    for i in range(1):
         ci += 1
         # Name of the experiment and path
         #exp_name = opt.__name__+"_WD"+str(wd)
@@ -173,7 +174,6 @@ for dat in all_configs:
             config["base_path"] = experiment_path
 
             # Testing paramenters
-            config["config.model_state"] = "/home/miguelv/data/out/Lesion/Journal/8-rerun_everything/1-comparisonNetworks/results/RatLesNetv2/" + exp_name + "/" + str(i+1) + "/model/model-699"
             config["data"] = dat
 
             ex.run(config_updates=config)
