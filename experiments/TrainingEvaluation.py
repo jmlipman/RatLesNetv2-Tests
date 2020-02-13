@@ -132,6 +132,7 @@ def main(config, Model, data, base_path, _run):
         log("Loading previous model")
         model.load_state_dict(torch.load(config["model_state"]))
 
+    """
     if config["pc_name"] != "sampo-tipagpu1":
         total, used = os.popen('"<path\to\NVSMI>\nvidia-smi" --query-gpu=memory.total,memory.used --format=csv,nounits,noheader').read().split(",")
         with open("memory", "a") as f:
@@ -145,6 +146,7 @@ def main(config, Model, data, base_path, _run):
             block_mem = max_mem - used
                                         
             hold_on_memory = torch.rand((256,1024,block_mem)).cuda()
+    """
 
     # Counters and flags
     e = 0 # Epoch counter

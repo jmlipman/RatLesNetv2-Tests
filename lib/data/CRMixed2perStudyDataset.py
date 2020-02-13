@@ -8,10 +8,7 @@ from lib.losses import *
 class CRMixed2perStudyDataset(torch.utils.data.Dataset):
 
     def __init__(self, split, loss=None, brainmask=None, overlap=None, dev=None):
-        """This class will have as a training set 5 lesion-containing scans
-           of each time-point. Validation will be 1 lesion-containing scan per
-           time-point. Test will be the rest
-
+        """
            In this dataset, I will train with 2 samples per study per time-point:
            One with the largest lesion, and one with the smallest lesion.
            Validation is the median lesion.
