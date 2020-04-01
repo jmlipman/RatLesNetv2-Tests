@@ -72,8 +72,7 @@ class RatLesNetv2(nn.Module):
         block6_out = self.block6(x)
         b4 = self.bottleneck4(block6_out)
 
-        #softed = torch.functional.F.softmax(b4, dim=1)
-        softed = torch.functional.F.sigmoid(b4)
+        softed = torch.functional.F.softmax(b4, dim=1)
         # Must be a tuple
         return (softed, b4)
         #return softed, b4, b1, b2, b3, block2_out, block3_out, block4_out, block5_out, block6_out
